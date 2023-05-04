@@ -1,5 +1,6 @@
 package com.igknighters;
 
+import com.igknighters.constants.ConstValues;
 import com.igknighters.constants.RobotSetup;
 import com.igknighters.controllers.DriverController;
 import com.igknighters.controllers.OperatorController;
@@ -17,7 +18,9 @@ public class RobotContainer {
     public static void controllerInit() {
         driverController.AssignButtons(allSubsystems);
         operatorController.AssignButtons(allSubsystems);
-        testingController.AssignButtons(allSubsystems);
+        if (ConstValues.DEBUG) {
+            testingController.AssignButtons(allSubsystems);
+        }
     }
 
 

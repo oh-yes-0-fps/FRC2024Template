@@ -3,6 +3,8 @@ package com.igknighters.constants;
 import java.util.Map;
 
 import com.igknighters.constants.PanConstants.RobotConstants;
+import com.igknighters.constants.robots.RobotAConstants;
+import com.igknighters.constants.robots.RobotBConstants;
 import com.igknighters.subsystems.Resources.Subsystems;
 
 import edu.wpi.first.wpilibj.RobotBase;

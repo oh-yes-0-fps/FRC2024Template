@@ -1,12 +1,14 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2023.2.1"
+    id "org.jetbrains.kotlin.jvm" version "1.7.10"
+    id "edu.wpi.first.GradleRIO" version "2023.4.2"
 }
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+def javaVersion = JavaVersion.VERSION_17
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
 
-def ROBOT_MAIN_CLASS = "frc.robot.Main"
+def ROBOT_MAIN_CLASS = "com.igknighters.Main"
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
@@ -45,8 +47,17 @@ wpi.java.debugJni = false
 // Set this to true to enable desktop support.
 def includeDesktopSupport = true
 
-// Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
-// Also defines JUnit 5.
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = javaVersion.toString()
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
@@ -65,14 +76,12 @@ dependencies {
     nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
     simulationRelease wpi.sim.enableRelease()
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-}
+    implementation platform("org.junit:junit-bom:5.8.2")
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testImplementation "org.junit.jupiter:junit-jupiter-params"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 
-test {
-    useJUnitPlatform()
-    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+    implementation "gov.nist.math:jama:1.0.3"
 }
 
 // Simulation configuration (e.g. environment variables).
@@ -93,7 +102,110 @@ deployArtifact.jarTask = jar
 wpi.java.configureExecutableTasks(jar)
 wpi.java.configureTestTasks(test)
 
-// Configure string concat to always inline compile
-tasks.withType(JavaCompile) {
-    options.compilerArgs.add '-XDstringConcat=inline'
+tasks.register("writeHostname") {
+    if (System.getenv("CI") == "true") return
+    // Define an output stream to write to instead of terminal
+    def stdout = new ByteArrayOutputStream()
+
+    // Execute the git command
+    exec {
+        commandLine "hostname"
+        // Write to the output stream instead of terminal
+        standardOutput = stdout
+    }
+
+    // Parse the output into a string
+    def hostname = stdout.toString().trim()
+
+    // Create a new file
+    new File(
+            // Join project directory and deploy directory
+            projectDir.toString() + "/src/main/deploy",
+            // File name to write to
+            "hostname.txt"
+    ).text = hostname // Set the contents of the file to the variable branch
 }
+
+deploy.targets.roborio.artifacts.frcStaticFileDeploy.dependsOn(writeHostname)
+
+tasks.register("writeGitUser") {
+    if (System.getenv("CI") == "true") return
+    // Define an output stream to write to instead of terminal
+    def stdout = new ByteArrayOutputStream()
+
+    // Execute the git command
+    exec {
+        commandLine "git", "config", "user.name"
+        // Write to the output stream instead of terminal
+        standardOutput = stdout
+    }
+
+    // Parse the output into a string
+    def user = stdout.toString().trim()
+
+    // Create a new file
+    new File(
+            // Join project directory and deploy directory
+            projectDir.toString() + "/src/main/deploy",
+            // File name to write to
+            "user.txt"
+    ).text = user // Set the contents of the file to the variable branch
+}
+
+deploy.targets.roborio.artifacts.frcStaticFileDeploy.dependsOn(writeGitUser)
+
+tasks.register("writeBranchName") {
+    if (System.getenv("CI") == "true") return
+    // Define an output stream to write to instead of terminal
+    def stdout = new ByteArrayOutputStream()
+
+    // Execute the git command
+    exec {
+        commandLine "git", "rev-parse", "--abbrev-ref", "HEAD"
+        // Write to the output stream instead of terminal
+        standardOutput = stdout
+    }
+
+    // Parse the output into a string
+    def branch = stdout.toString().trim()
+
+    // Create a new file
+    new File(
+            // Join project directory and deploy directory
+            projectDir.toString() + "/src/main/deploy",
+            // File name to write to
+            "branch.txt"
+    ).text = branch // Set the contents of the file to the variable branch
+}
+
+deploy.targets.roborio.artifacts.frcStaticFileDeploy.dependsOn(writeBranchName)
+
+tasks.register("writeCommitHash") {
+    if (System.getenv("CI") == "true") return
+    def stdout = new ByteArrayOutputStream()
+
+    exec {
+        commandLine "git", "rev-parse", "--short", "HEAD"
+        standardOutput = stdout
+    }
+
+    def commitHash = stdout.toString().trim()
+
+    def stdout2 = new ByteArrayOutputStream()
+
+    exec {
+        commandLine "git", "status", "-s"
+        standardOutput = stdout2
+    }
+
+    def dirty = stdout2.toString().isEmpty() ? "" : "(dirty)"
+
+    def combined = commitHash + " " + dirty
+
+    new File(
+            projectDir.toString() + "/src/main/deploy",
+            "commit.txt"
+    ).text = combined
+}
+
+deploy.targets.roborio.artifacts.frcStaticFileDeploy.dependsOn(writeCommitHash)

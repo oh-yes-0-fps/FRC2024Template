@@ -4,6 +4,8 @@
 
 package com.igknighters;
 
+import com.igknighters.util.logging.LogInit;
+
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -25,6 +27,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void robotInit() {
+        LogInit.init();
         RobotContainer.controllerInit();
     }
 

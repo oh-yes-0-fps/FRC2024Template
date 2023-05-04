@@ -9,41 +9,41 @@ public class TestingController extends ControllerParent {
         // disregard null safety as it is checked on assignment
 
         /// FACE BUTTONS
-        // this.A =
+        // this.A.binding =
 
-        // this.B =
+        // this.B.binding =
 
-        // this.X =
+        // this.X.binding =
 
-        // this.Y =
+        // this.Y.binding =
 
         /// BUMPER
-        // this.LB =
+        // this.LB.binding =
 
-        // this.RB =
+        // this.RB.binding =
 
         /// CENTER BUTTONS
-        // this.Back =
+        // this.Back.binding =
 
-        // this.Start =
+        // this.Start.binding =
 
         /// STICKS
-        // this.LS =
+        // this.LS.binding =
 
-        // this.RS =
+        // this.RS.binding =
 
         /// TRIGGERS
-        // this.LT =
+        // this.LT.binding =
 
-        // this.RT =
+        // this.RT.binding =
 
         /// DPAD
-        // this.DPR =
+        // this.DPR.binding =
 
-        // this.DPD =
+        // this.DPD.binding =
 
-        // this.DPL =
+        // this.DPL.binding =
 
-        // this.DPU =
+        // this.DPU.binding =
     }
 }

@@ -47,7 +47,7 @@ public class Mcq_CanCoder {
      * 
      * @param consumer
      */
-    public void withCANCoder(Consumer<CANcoder> consumer) {
+    public void map(Consumer<CANcoder> consumer) {
         if (hasCoder) {
             consumer.accept(canCoder);
         }
@@ -59,7 +59,7 @@ public class Mcq_CanCoder {
      * @param <T>
      * @param consumer
      */
-    public <T> HardwareValueResponse<T> withCANCoder(Function<CANcoder, T> func) {
+    public <T> HardwareValueResponse<T> map(Function<CANcoder, T> func) {
         if (hasCoder) {
             return HardwareValueResponse.contains(func.apply(canCoder));
         }

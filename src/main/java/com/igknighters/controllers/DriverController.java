@@ -10,45 +10,45 @@ public class DriverController extends ControllerParent {
         // disregard null safety as it is checked on assignment
 
         /// FACE BUTTONS
-        this.A = new SingleDepBinding(
+        this.A.binding = new SingleDepBinding(
                 Subsystems.Example,
                 (trigger, all_ss) -> trigger.onTrue(ExampleCommands.cmdDoThing(all_ss.example.getSubsystem())));
 
-        this.B = new MultiDepBinding(
+        this.B.binding = new MultiDepBinding(
                 Subsystems.list("Example", "Example2"), // example 2 doesnt exist so would never assign
                 (trigger, all_ss) -> trigger.onTrue(ExampleCommands.cmdDoThing(all_ss.example.getSubsystem())));
 
-        // this.X =
+        // this.X.binding =
 
-        // this.Y =
+        // this.Y.binding =
 
         /// BUMPER
-        // this.LB =
+        // this.LB.binding =
 
-        // this.RB =
+        // this.RB.binding =
 
         /// CENTER BUTTONS
-        // this.Back =
+        // this.Back.binding =
 
-        // this.Start =
+        // this.Start.binding =
 
         /// STICKS
-        // this.LS =
+        // this.LS.binding =
 
-        // this.RS =
+        // this.RS.binding =
 
         /// TRIGGERS
-        // this.LT =
+        // this.LT.binding =
 
-        // this.RT =
+        // this.RT.binding =
 
         /// DPAD
-        // this.DPR =
+        // this.DPR.binding =
 
-        // this.DPD =
+        // this.DPD.binding =
 
-        // this.DPL =
+        // this.DPL.binding =
 
-        // this.DPU =
+        // this.DPU.binding =
     }
 }

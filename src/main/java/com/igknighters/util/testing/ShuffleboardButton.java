@@ -11,8 +11,6 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.shuffleboard.SimpleWidget;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-// import edu.wpi.first.wpilibj2.command.InstantCommand;
-// import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class ShuffleboardButton {
     GenericEntry entry;
@@ -157,7 +155,7 @@ public class ShuffleboardButton {
     }
 
     /**
-     * Has to be set before any actions are set if you want it to work
+     * Has to be set before any actions are set if you want to use custom loop
      */
     public ShuffleboardButton withEventLoop(EventLoop eventLoop) {
         this.eventLoop = eventLoop;

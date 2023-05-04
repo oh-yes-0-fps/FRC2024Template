@@ -7,7 +7,7 @@ public class DriverController extends ControllerParent {
 
     public DriverController(int port) {
         super(port);
-        // disregard null safety as it is checked on assignment
+        // disregard null safety for subsystems as it is checked on assignment
 
         /// FACE BUTTONS
         this.A.binding = new SingleDepBinding(

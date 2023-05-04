@@ -10,21 +10,25 @@ import edu.wpi.first.wpilibj.RobotController;
 
 public class RobotSetup {
 
+    //to make these only be constructed once each instead of once per enum theyre stored in
+    private static final RobotConstants robotAConst = new RobotAConstants();
+    private static final RobotConstants robotBConst = new RobotBConstants();
+
     public enum RobotID {
         RobotA("RobotA",
             Subsystems.list(Subsystems.Example), //can be constructed with enums
-            new RobotAConstants()),
+            robotAConst),
 
         RobotB("RobotB",
             Subsystems.list("Example"), //can be constructed with strings(pascal case)
-            new RobotBConstants()),
+            robotBConst),
 
-        TestBoard("testBoard", Subsystems.none(), new RobotAConstants()),
+        TestBoard("testBoard", Subsystems.none(), robotAConst),
 
-        Simulation("simulation", Subsystems.all(), new RobotAConstants()),
+        Simulation("simulation", Subsystems.all(), robotAConst),
 
         // this will never be used as if this is hit an error will already have been thrown
-        Unlabeled("", Subsystems.none(), new RobotAConstants());
+        Unlabeled("", Subsystems.none(), robotBConst);
 
         public final String name;
         public final Subsystems[] subsystems;

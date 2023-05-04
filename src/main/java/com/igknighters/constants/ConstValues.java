@@ -3,7 +3,7 @@ package com.igknighters.constants;
 import com.igknighters.constants.PanConstants.ExampleConstants;
 
 //this will be where we put references to all our initialized values
-public class Values {
+public class ConstValues {
 
     //you can put global vars here aswell
     public static final boolean DEBUG = false;

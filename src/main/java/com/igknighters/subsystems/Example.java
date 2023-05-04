@@ -4,11 +4,15 @@
 
 package com.igknighters.subsystems;
 
+import com.igknighters.constants.ConstValues;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Example extends SubsystemBase {
     /** Creates a new Example. */
     public Example() {
+        String name = ConstValues.kExample.ROBOT_NAME;
+        System.out.println("Hello " + name);
     }
 
     //subsystems go back to having no commands in them

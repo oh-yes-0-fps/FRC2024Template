@@ -3,6 +3,7 @@ package com.igknighters.controllers;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import com.igknighters.subsystems.Resources.AllSubsystems;
 import com.igknighters.subsystems.Resources.Subsystems;
@@ -27,6 +28,8 @@ public class ControllerParent {
         public boolean has_deps(HashSet<Subsystems> enabled_subsystems);
 
         public void assign(Trigger trigger, AllSubsystems subsystems);
+
+        public boolean is_bound();
     }
 
     protected static class SingleDepBinding implements Binding{
@@ -63,6 +66,11 @@ public class ControllerParent {
         public void assign(Trigger trigger, AllSubsystems subsystems) {
             action.accept(trigger, subsystems);
         }
+
+        @Override
+        public boolean is_bound() {
+            return !empty;
+        }
     }
 
     protected static class MultiDepBinding implements Binding {
@@ -87,6 +95,11 @@ public class ControllerParent {
         @Override
         public void assign(Trigger trigger, AllSubsystems subsystems) {
             action.accept(trigger, subsystems);
+        }
+
+        @Override
+        public boolean is_bound() {
+            return true;
         }
     }
 
@@ -122,6 +135,52 @@ public class ControllerParent {
             if (tuple.binding.has_deps(subsystem_set)) {
                 tuple.binding.assign(tuple.trigger, subsystems);
             }
+        }
+    }
+
+    public Supplier<Double> RightStickX() {
+        return () -> controller.getRightX();
+    }
+
+    public Supplier<Double> RightStickY() {
+        return () -> controller.getRightY();
+    }
+
+    public Supplier<Double> LeftStickX() {
+        return () -> controller.getLeftX();
+    }
+
+    public Supplier<Double> LeftStickY() {
+        return () -> controller.getLeftY();
+    }
+
+    /**
+     * will print warning if this trigger is also bound to a command
+     * @param suppressWarning if true will not print warning even if bound to a command
+     */
+    public Supplier<Double> RightTrigger(boolean suppressWarning) {
+        if (RT.binding.is_bound() && !suppressWarning) {
+            return () -> {
+                System.out.println("WARNING: Right Trigger is bound to a command");
+                return controller.getRightTriggerAxis();
+            };
+        } else {
+            return () -> controller.getRightTriggerAxis();
+        }
+    }
+
+    /**
+     * will print warning if this trigger is also bound to a command
+     * @param suppressWarning if true will not print warning even if bound to a command
+     */
+    public Supplier<Double> LeftTrigger(boolean suppressWarning) {
+        if (LT.binding.is_bound() && !suppressWarning) {
+            return () -> {
+                System.out.println("WARNING: Left Trigger is bound to a command");
+                return controller.getLeftTriggerAxis();
+            };
+        } else {
+            return () -> controller.getLeftTriggerAxis();
         }
     }
 }

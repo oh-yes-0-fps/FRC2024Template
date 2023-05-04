@@ -13,6 +13,7 @@ public class PanConstants {
         public String ROBOT_NAME;
     }
 
+    //new constant sections have to be instantiated here
     public static class RobotConstants {
         public ExampleConstants kExample = new ExampleConstants();
     }

@@ -4,9 +4,7 @@
 
 package com.igknighters;
 
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 /**
@@ -27,10 +25,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void robotInit() {
-        if (RobotBase.isSimulation()) {
-            // Used for robot identifier in simulation
-            RoboRioSim.setSerialNumber("ffffffff");
-        }
+        RobotContainer.controllerInit();
     }
 
     /**

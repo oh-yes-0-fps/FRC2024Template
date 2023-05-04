@@ -5,6 +5,7 @@ import java.util.Map;
 import com.igknighters.constants.PanConstants.RobotConstants;
 import com.igknighters.subsystems.Resources.Subsystems;
 
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 
 public class RobotSetup {
@@ -48,7 +49,12 @@ public class RobotSetup {
 
     public static RobotID getRobotID() {
         if (currentID == RobotID.Unlabeled) {
-            String currentSerialNum = RobotController.getSerialNumber();
+            String currentSerialNum;
+            if (RobotBase.isReal()) {
+                currentSerialNum = RobotController.getSerialNumber();
+            } else {
+                currentSerialNum = "ffffffff";
+            }
             if (serialToID.containsKey(currentSerialNum)) {
                 currentID = serialToID.get(currentSerialNum);
             } else {

@@ -66,24 +66,28 @@ public class Robot extends TimedRobot {
     @Override
     public void autonomousInit() {
         RobotContainer.autoInit();
+        RobotContainer.enabledInit();
     }
 
     /** This function is called periodically during autonomous. */
     @Override
     public void autonomousPeriodic() {
         RobotContainer.autoPeriodic();
+        RobotContainer.enabledPeriodic();
     }
 
     /** This function is called once when teleop is enabled. */
     @Override
     public void teleopInit() {
         RobotContainer.teleopInit();
+        RobotContainer.enabledInit();
     }
 
     /** This function is called periodically during operator control. */
     @Override
     public void teleopPeriodic() {
         RobotContainer.teleopPeriodic();
+        RobotContainer.enabledPeriodic();
     }
 
     /** This function is called once when the robot is disabled. */
@@ -102,12 +106,14 @@ public class Robot extends TimedRobot {
     @Override
     public void testInit() {
         RobotContainer.testInit();
+        RobotContainer.enabledInit();
     }
 
     /** This function is called periodically during test mode. */
     @Override
     public void testPeriodic() {
         RobotContainer.testPeriodic();
+        RobotContainer.enabledPeriodic();
     }
 
     /** This function is called once when the robot is first started up. */

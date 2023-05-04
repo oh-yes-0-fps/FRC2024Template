@@ -114,6 +114,7 @@ public class Resources {
                     //add new cases for new subsystems
                     case Example:
                         example = new OptionalSubsystem<Example>(new Example());
+                        example.getSubsystem().setDefaultCommand();
                         break;
                     default:
                         break;
@@ -140,5 +141,9 @@ public class Resources {
         default public void testEnd() {
             return;
         }
+    }
+
+    public interface SetableDefaultCommand {
+        public void setDefaultCommand();
     }
 }

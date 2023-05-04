@@ -5,10 +5,12 @@
 package com.igknighters.subsystems;
 
 import com.igknighters.constants.ConstValues;
+import com.igknighters.subsystems.Resources.SetableDefaultCommand;
+import com.igknighters.subsystems.Resources.TestableSubsystem;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Example extends SubsystemBase {
+public class Example extends SubsystemBase  implements TestableSubsystem, SetableDefaultCommand{
     /** Creates a new Example. */
     public Example() {
         String name = ConstValues.kExample.ROBOT_NAME;
@@ -21,5 +23,9 @@ public class Example extends SubsystemBase {
     @Override
     public void periodic() {
         // This method will be called once per scheduler run
+    }
+
+    @Override
+    public void setDefaultCommand() {
     }
 }

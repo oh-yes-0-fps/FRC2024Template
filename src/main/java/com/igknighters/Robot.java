@@ -4,8 +4,10 @@
 
 package com.igknighters;
 
+import com.igknighters.constants.ConstValues;
 import com.igknighters.util.logging.LogInit;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -29,6 +31,7 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         LogInit.init();
         RobotContainer.controllerInit();
+        DriverStation.silenceJoystickConnectionWarning(ConstValues.DEBUG);
     }
 
     /**
@@ -93,6 +96,7 @@ public class Robot extends TimedRobot {
     /** This function is called once when the robot is disabled. */
     @Override
     public void disabledInit() {
+        CommandScheduler.getInstance().cancelAll();
         RobotContainer.disabledInit();
     }
 
@@ -105,6 +109,7 @@ public class Robot extends TimedRobot {
     /** This function is called once when test mode is enabled. */
     @Override
     public void testInit() {
+        CommandScheduler.getInstance().cancelAll();
         RobotContainer.testInit();
         RobotContainer.enabledInit();
     }

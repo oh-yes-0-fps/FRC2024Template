@@ -79,13 +79,16 @@ public class Resources {
     public static class OptionalSubsystem <T extends Subsystem> {
         private final T subsystem;
         private final boolean enabled;
-        OptionalSubsystem(T subsystem) {
+        private OptionalSubsystem(T subsystem, boolean enabled) {
             this.subsystem = subsystem;
-            this.enabled = true;
+            this.enabled = enabled;
         }
-        OptionalSubsystem() {
-            this.subsystem = null;
-            this.enabled = false;
+        public static <T extends Subsystem> OptionalSubsystem<T> contains(T subsystem) {
+            return new OptionalSubsystem<T>(subsystem, true);
+        }
+
+        public static <T extends Subsystem> OptionalSubsystem<T> empty() {
+            return new OptionalSubsystem<T>(null, false);
         }
 
         public boolean isEnabled() {
@@ -96,7 +99,7 @@ public class Resources {
             return subsystem;
         }
 
-        public void withSubsystem(Consumer<T> consumer) {
+        public void map(Consumer<T> consumer) {
             if (enabled) {
                 consumer.accept(subsystem);
             }
@@ -106,14 +109,14 @@ public class Resources {
     public static class AllSubsystems {
         private Subsystems[] subsystems;
         //add new subsystems here, make sure they are public
-        public OptionalSubsystem<Example> example = new OptionalSubsystem<Example>();
+        public OptionalSubsystem<Example> example = OptionalSubsystem.empty();
         public AllSubsystems(Subsystems[] subsystems) {
             this.subsystems = subsystems;
             for (Subsystems subsystem : subsystems) {
                 switch (subsystem) {
                     //add new cases for new subsystems
                     case Example:
-                        example = new OptionalSubsystem<Example>(new Example());
+                        example = OptionalSubsystem.contains(new Example());
                         example.getSubsystem().setDefaultCommand();
                         break;
                     default:

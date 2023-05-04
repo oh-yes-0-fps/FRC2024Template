@@ -14,7 +14,7 @@ import com.igknighters.util.hardware.OptionalHardwareUtil.HardwareValueResponse;
 import com.igknighters.util.hardware.OptionalHardwareUtil.PositionUnit;
 import com.igknighters.util.hardware.OptionalHardwareUtil.VelocityUnit;
 
-public class Mcq_CanCoder {
+public class McqCanCoder {
     private int deviceNumber;
     private boolean hasCoder = false;
     private CANcoder canCoder;
@@ -23,7 +23,7 @@ public class Mcq_CanCoder {
     private StatusSignalValue<Double> posStatusValue;
     private StatusSignalValue<Double> absPosStatusValue;
 
-    public Mcq_CanCoder(int deviceNumber, boolean isEnabled) {
+    public McqCanCoder(int deviceNumber, boolean isEnabled) {
         this.deviceNumber = deviceNumber;
         this.hasCoder = isEnabled;
         if (hasCoder) {

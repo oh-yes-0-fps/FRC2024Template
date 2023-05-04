@@ -27,7 +27,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
-public class Mcq_TalonFX {
+public class McqTalonFX {
     private int deviceNumber;
     private boolean hasMotor = false;
     private TalonFX motor;
@@ -37,7 +37,7 @@ public class Mcq_TalonFX {
 
     private boolean foc = false;
 
-    public Mcq_TalonFX(int deviceNumber, boolean isEnabled) {
+    public McqTalonFX(int deviceNumber, boolean isEnabled) {
         this.deviceNumber = deviceNumber;
         this.hasMotor = isEnabled;
         if (isEnabled) {
@@ -420,7 +420,7 @@ public class Mcq_TalonFX {
         return HardwareSuccessResponse.empty();
     }
 
-    public HardwareSuccessResponse follow(Mcq_TalonFX otherMotor, boolean invertMaster) {
+    public HardwareSuccessResponse follow(McqTalonFX otherMotor, boolean invertMaster) {
         if (hasMotor && otherMotor.enabled()) {
             return HardwareSuccessResponse.from(
                     this.motor.setControl(new Follower(otherMotor.getDeviceID(), invertMaster)));

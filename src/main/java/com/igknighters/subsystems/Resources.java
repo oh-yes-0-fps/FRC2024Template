@@ -76,18 +76,18 @@ public class Resources {
      * @param subsystem the subsystem
      * @param enabled whether or not the subsystem is enabled
      */
-    public static class OptionalSubsystem <T extends Subsystem> {
+    public static class OptionalSubsystem <T extends Subsystem & McqSubsystemRequirements> {
         private final T subsystem;
         private final boolean enabled;
         private OptionalSubsystem(T subsystem, boolean enabled) {
             this.subsystem = subsystem;
             this.enabled = enabled;
         }
-        public static <T extends Subsystem> OptionalSubsystem<T> contains(T subsystem) {
+        public static <T extends Subsystem & McqSubsystemRequirements> OptionalSubsystem<T> contains(T subsystem) {
             return new OptionalSubsystem<T>(subsystem, true);
         }
 
-        public static <T extends Subsystem> OptionalSubsystem<T> empty() {
+        public static <T extends Subsystem & McqSubsystemRequirements> OptionalSubsystem<T> empty() {
             return new OptionalSubsystem<T>(null, false);
         }
 
@@ -117,7 +117,6 @@ public class Resources {
                     //add new cases for new subsystems
                     case Example:
                         example = OptionalSubsystem.contains(new Example());
-                        example.getSubsystem().setDefaultCommand();
                         break;
                     default:
                         break;
@@ -130,7 +129,6 @@ public class Resources {
         }
     }
 
-    //this is the interface that all subsystems must implement
     public interface TestableSubsystem {
 
         default public void testInit() {
@@ -148,5 +146,13 @@ public class Resources {
 
     public interface SetableDefaultCommand {
         public void setDefaultCommand();
+    }
+
+    public interface ShuffleboardCompatible {
+        public void setupShuffleBoard();
+    }
+
+    //this is the interface that all subsystems must implement
+    public interface McqSubsystemRequirements extends TestableSubsystem, SetableDefaultCommand, ShuffleboardCompatible {
     }
 }

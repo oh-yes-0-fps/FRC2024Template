@@ -12,11 +12,11 @@ public class DriverController extends ControllerParent {
         /// FACE BUTTONS
         this.A.binding = new SingleDepBinding(
                 Subsystems.Example,
-                (trigger, all_ss) -> trigger.onTrue(ExampleCommands.cmdDoThing(all_ss.example.getSubsystem())));
+                (trigger, allSS) -> trigger.onTrue(ExampleCommands.cmdDoThing(allSS.example.getSubsystem())));
 
         this.B.binding = new MultiDepBinding(
                 Subsystems.list("Example", "Example2"), // example 2 doesnt exist so would never assign
-                (trigger, all_ss) -> trigger.onTrue(ExampleCommands.cmdDoThing(all_ss.example.getSubsystem())));
+                (trigger, allSS) -> trigger.onTrue(ExampleCommands.cmdDoThing(allSS.example.getSubsystem())));
 
         // this.X.binding =
 

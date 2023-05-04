@@ -25,11 +25,11 @@ public class ControllerParent {
     }
 
     private interface Binding {
-        public boolean has_deps(HashSet<Subsystems> enabled_subsystems);
+        public boolean hasDeps(HashSet<Subsystems> enabledSubsystems);
 
         public void assign(Trigger trigger, AllSubsystems subsystems);
 
-        public boolean is_bound();
+        public boolean isBound();
     }
 
     protected static class SingleDepBinding implements Binding{
@@ -50,16 +50,16 @@ public class ControllerParent {
         }
 
         public static SingleDepBinding empty() {
-            return new SingleDepBinding(null, (controller, all_ss) -> {
+            return new SingleDepBinding(null, (controller, allSS) -> {
             }, true);
         }
 
         @Override
-        public boolean has_deps(HashSet<Subsystems> enabled_subsystems) {
+        public boolean hasDeps(HashSet<Subsystems> enabledSubsystems) {
             if (empty) {
                 return false;
             }
-            return enabled_subsystems.contains(subsystem);
+            return enabledSubsystems.contains(subsystem);
         }
 
         @Override
@@ -68,24 +68,24 @@ public class ControllerParent {
         }
 
         @Override
-        public boolean is_bound() {
+        public boolean isBound() {
             return !empty;
         }
     }
 
     protected static class MultiDepBinding implements Binding {
-        public final Subsystems[] subsystem_array;
+        public final Subsystems[] subsystemArray;
         public final BiConsumer<Trigger, AllSubsystems> action;
 
-        public MultiDepBinding(Subsystems[] subsystem_array, BiConsumer<Trigger, AllSubsystems> action) {
-            this.subsystem_array = subsystem_array;
+        public MultiDepBinding(Subsystems[] subsystemArray, BiConsumer<Trigger, AllSubsystems> action) {
+            this.subsystemArray = subsystemArray;
             this.action = action;
         }
 
         @Override
-        public boolean has_deps(HashSet<Subsystems> enabled_subsystems) {
-            for (Subsystems subsystem : subsystem_array) {
-                if (!enabled_subsystems.contains(subsystem)) {
+        public boolean hasDeps(HashSet<Subsystems> enabledSubsystems) {
+            for (Subsystems subsystem : subsystemArray) {
+                if (!enabledSubsystems.contains(subsystem)) {
                     return false;
                 }
             }
@@ -98,7 +98,7 @@ public class ControllerParent {
         }
 
         @Override
-        public boolean is_bound() {
+        public boolean isBound() {
             return true;
         }
     }
@@ -126,13 +126,13 @@ public class ControllerParent {
     }
 
     public void AssignButtons(AllSubsystems subsystems) {
-        HashSet<Subsystems> subsystem_set = new HashSet<Subsystems>(
+        HashSet<Subsystems> subsystemSet = new HashSet<Subsystems>(
                 Arrays.asList(subsystems.getEnabledSubsystemEnums()));
         TriggerBindingTuple[] tuples = new TriggerBindingTuple[] {
             A, B, X, Y, LB, RB, Back, Start, LS, RS, LT, RT, DPR, DPD, DPL, DPU };
         for (int i = 0; i < tuples.length; i++) {
             TriggerBindingTuple tuple = tuples[i];
-            if (tuple.binding.has_deps(subsystem_set)) {
+            if (tuple.binding.hasDeps(subsystemSet)) {
                 tuple.binding.assign(tuple.trigger, subsystems);
             }
         }
@@ -159,7 +159,7 @@ public class ControllerParent {
      * @param suppressWarning if true will not print warning even if bound to a command
      */
     public Supplier<Double> RightTrigger(boolean suppressWarning) {
-        if (RT.binding.is_bound() && !suppressWarning) {
+        if (RT.binding.isBound() && !suppressWarning) {
             return () -> {
                 System.out.println("WARNING: Right Trigger is bound to a command");
                 return controller.getRightTriggerAxis();
@@ -174,7 +174,7 @@ public class ControllerParent {
      * @param suppressWarning if true will not print warning even if bound to a command
      */
     public Supplier<Double> LeftTrigger(boolean suppressWarning) {
-        if (LT.binding.is_bound() && !suppressWarning) {
+        if (LT.binding.isBound() && !suppressWarning) {
             return () -> {
                 System.out.println("WARNING: Left Trigger is bound to a command");
                 return controller.getLeftTriggerAxis();

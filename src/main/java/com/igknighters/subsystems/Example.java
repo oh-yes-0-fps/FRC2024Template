@@ -5,12 +5,11 @@
 package com.igknighters.subsystems;
 
 import com.igknighters.constants.ConstValues;
-import com.igknighters.subsystems.Resources.SetableDefaultCommand;
-import com.igknighters.subsystems.Resources.TestableSubsystem;
+import com.igknighters.subsystems.Resources.McqSubsystemRequirements;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Example extends SubsystemBase  implements TestableSubsystem, SetableDefaultCommand{
+public class Example extends SubsystemBase implements McqSubsystemRequirements{
     /** Creates a new Example. */
     public Example() {
         String name = ConstValues.kExample.ROBOT_NAME;
@@ -27,5 +26,9 @@ public class Example extends SubsystemBase  implements TestableSubsystem, Setabl
 
     @Override
     public void setDefaultCommand() {
+    }
+
+    @Override
+    public void setupShuffleBoard() {
     }
 }

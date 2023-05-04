@@ -483,12 +483,12 @@ public class Mcq_TalonFX {
     }
 
     // static
-    public static MotionMagicConfigs createMotionMagicConfig(Double cruise_rps, Double accel_duration,
-            Double accel_ramp_duration) {
+    public static MotionMagicConfigs createMotionMagicConfig(Double cruiseRps, Double accelDuration,
+            Double accelRampDuration) {
         var cfg = new MotionMagicConfigs();
-        cfg.MotionMagicCruiseVelocity = Math.abs(cruise_rps);
-        cfg.MotionMagicAcceleration = accel_duration > 0 ? cruise_rps / accel_duration : 0;
-        cfg.MotionMagicJerk = accel_ramp_duration > 0 ? (cruise_rps / accel_duration) / accel_ramp_duration : 0;
+        cfg.MotionMagicCruiseVelocity = Math.abs(cruiseRps);
+        cfg.MotionMagicAcceleration = accelDuration > 0 ? cruiseRps / accelDuration : 0;
+        cfg.MotionMagicJerk = accelRampDuration > 0 ? (cruiseRps / accelDuration) / accelRampDuration : 0;
         return cfg;
     }
 }

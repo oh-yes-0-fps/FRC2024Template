@@ -78,9 +78,9 @@ public class Mcq_TalonFX {
 
     public HardwareValueResponse<TalonFXSimState> getSimState() {
         if (hasMotor) {
-            return new HardwareValueResponse<TalonFXSimState>(motor.getSimState());
+            return HardwareValueResponse.contains(motor.getSimState());
         }
-        return new HardwareValueResponse<TalonFXSimState>();
+        return HardwareValueResponse.empty();
     }
 
     /**
@@ -88,12 +88,12 @@ public class Mcq_TalonFX {
      * 
      * @param consumer
      */
-    public HardwareSuccessResponse withMotor(Consumer<TalonFX> consumer) {
+    public HardwareSuccessResponse map(Consumer<TalonFX> consumer) {
         if (hasMotor) {
             consumer.accept(motor);
-            return new HardwareSuccessResponse(true, true);
+            return HardwareSuccessResponse.success();
         }
-        return new HardwareSuccessResponse(false, false);
+        return HardwareSuccessResponse.empty();
     }
 
     /**
@@ -102,11 +102,11 @@ public class Mcq_TalonFX {
      * @param <T>
      * @param consumer
      */
-    public <T> HardwareValueResponse<T> withMotor(Function<TalonFX, T> func) {
+    public <T> HardwareValueResponse<T> map(Function<TalonFX, T> func) {
         if (hasMotor) {
-            return new HardwareValueResponse<T>(func.apply(motor));
+            return HardwareValueResponse.contains(func.apply(motor));
         }
-        return new HardwareValueResponse<T>();
+        return HardwareValueResponse.empty();
     }
 
     /**
@@ -143,8 +143,10 @@ public class Mcq_TalonFX {
                 case TICKS_PER_100MS:
                     outVal = val * 2048 * 10;
             }
+        } else {
+            return HardwareValueResponse.empty();
         }
-        return new HardwareValueResponse<Double>(hasMotor, outVal);
+        return HardwareValueResponse.contains(outVal);
     }
 
     /**
@@ -165,8 +167,10 @@ public class Mcq_TalonFX {
                 case RADIANS:
                     outVal = val * 2 * Math.PI;
             }
+        } else {
+            return HardwareValueResponse.empty();
         }
-        return new HardwareValueResponse<Double>(hasMotor, outVal);
+        return HardwareValueResponse.contains(outVal);
     }
 
     /**
@@ -189,8 +193,10 @@ public class Mcq_TalonFX {
                 case RADIANS:
                     outVal = val * 2 * Math.PI;
             }
+        } else {
+            return HardwareValueResponse.empty();
         }
-        return new HardwareValueResponse<Double>(hasMotor, outVal);
+        return HardwareValueResponse.contains(outVal);
     }
 
     /**
@@ -225,9 +231,9 @@ public class Mcq_TalonFX {
             VelocityDutyCycle velo = new VelocityDutyCycle(speed)
                     .withEnableFOC(this.foc)
                     .withFeedForward(feedForward);
-            return new HardwareSuccessResponse(motor.setControl(velo));
+            return HardwareSuccessResponse.from(motor.setControl(velo));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
     }
 
     /**
@@ -257,9 +263,9 @@ public class Mcq_TalonFX {
             PositionDutyCycle pos = new PositionDutyCycle(position)
                     .withEnableFOC(this.foc)
                     .withFeedForward(feedForward);
-            return new HardwareSuccessResponse(motor.setControl(pos));
+            return HardwareSuccessResponse.from(motor.setControl(pos));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
     }
 
     /**
@@ -283,9 +289,9 @@ public class Mcq_TalonFX {
                     .withEnableFOC(this.foc)
                     .withFeedForward(feedForward)
                     .withSlot(0);
-            return new HardwareSuccessResponse(motor.setControl(pos));
+            return HardwareSuccessResponse.from(motor.setControl(pos));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
     }
 
     /**
@@ -300,9 +306,9 @@ public class Mcq_TalonFX {
      */
     public HardwareSuccessResponse stop() {
         if (hasMotor) {
-            return new HardwareSuccessResponse(motor.setControl(new VoltageOut(0.0)));
+            return HardwareSuccessResponse.from(motor.setControl(new VoltageOut(0.0)));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
     }
 
     /**
@@ -310,9 +316,9 @@ public class Mcq_TalonFX {
      */
     public HardwareValueResponse<Double> getCurrent() {
         if (hasMotor) {
-            return new HardwareValueResponse<Double>(hasMotor, motor.getTorqueCurrent().getValue());
+            return HardwareValueResponse.contains(motor.getTorqueCurrent().getValue());
         }
-        return new HardwareValueResponse<Double>();
+        return HardwareValueResponse.empty();
     }
 
     public HardwareValueResponse<Boolean> hasMotorReached(PositionUnit units, double value, double tolerance) {
@@ -332,12 +338,12 @@ public class Mcq_TalonFX {
                 pos = value / (2 * Math.PI);
                 tol = tolerance / (2 * Math.PI);
             } else {
-                return new HardwareValueResponse<Boolean>();
+                return HardwareValueResponse.empty();
             }
-            return new HardwareValueResponse<Boolean>(
+            return HardwareValueResponse.contains(
                     Math.abs(pos - this.getPosition(PositionUnit.REVOLUTIONS).getValue()) < tol);
         }
-        return new HardwareValueResponse<Boolean>();
+        return HardwareValueResponse.empty();
     }
 
     public HardwareValueResponse<Boolean> hasMotorReached(VelocityUnit units, double value, double tolerance) {
@@ -354,12 +360,12 @@ public class Mcq_TalonFX {
                 vel = value / 2048.0 / 10.0;
                 tol = tolerance / 2048.0 / 10.0;
             } else {
-                return new HardwareValueResponse<Boolean>();
+                return HardwareValueResponse.empty();
             }
-            return new HardwareValueResponse<Boolean>(
+            return HardwareValueResponse.contains(
                     Math.abs(vel - this.getVelocity(VelocityUnit.RPS).getValue()) < tol);
         }
-        return new HardwareValueResponse<Boolean>();
+        return HardwareValueResponse.empty();
     }
 
     public HardwareSuccessResponse setNeutralMode(NeutralModeValue mode) {
@@ -374,9 +380,9 @@ public class Mcq_TalonFX {
             }
             // cfg.NeutralMode = brake ? NeutralModeValue.Brake : NeutralModeValue.Coast;
             cfg.NeutralMode = mode;
-            return new HardwareSuccessResponse(motor.getConfigurator().apply(cfg));
+            return HardwareSuccessResponse.from(motor.getConfigurator().apply(cfg));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
     }
 
     public HardwareSuccessResponse setInverted(boolean inverted) {
@@ -390,9 +396,9 @@ public class Mcq_TalonFX {
                 throw new RuntimeException("Failed to get motor config");
             }
             cfg.Inverted = inverted ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
-            return new HardwareSuccessResponse(motor.getConfigurator().apply(cfg));
+            return HardwareSuccessResponse.from(motor.getConfigurator().apply(cfg));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
     }
 
     public HardwareSuccessResponse setSensorPosition(PositionUnit units, double pos) {
@@ -409,17 +415,17 @@ public class Mcq_TalonFX {
             } else {
                 position = 0.0;
             }
-            return new HardwareSuccessResponse(motor.setRotorPosition(position));
+            return HardwareSuccessResponse.from(motor.setRotorPosition(position));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
     }
 
     public HardwareSuccessResponse follow(Mcq_TalonFX otherMotor, boolean invertMaster) {
         if (hasMotor && otherMotor.enabled()) {
-            return new HardwareSuccessResponse(
+            return HardwareSuccessResponse.from(
                     this.motor.setControl(new Follower(otherMotor.getDeviceID(), invertMaster)));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
     }
 
     // COMMANDS

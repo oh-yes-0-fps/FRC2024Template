@@ -41,7 +41,7 @@ public class OptionalHardwareUtil {
         private boolean hasHardware;
         private T value;
 
-        public HardwareValueResponse(boolean hasHardware, T value) {
+        private HardwareValueResponse(boolean hasHardware, T value) {
             this.hasHardware = hasHardware;
             this.value = value;
         }
@@ -51,17 +51,16 @@ public class OptionalHardwareUtil {
          * 
          * @param value
          */
-        public HardwareValueResponse(T value) {
-            this.hasHardware = true;
-            this.value = value;
+        public static <T> HardwareValueResponse<T> contains(T value) {
+            return new HardwareValueResponse<T>(true, value);
         }
+
 
         /**
          * no hardware present, value is null
          */
-        public HardwareValueResponse() {
-            this.hasHardware = false;
-            this.value = null;
+        public static <T> HardwareValueResponse<T> empty() {
+            return new HardwareValueResponse<T>(false, null);
         }
 
         /**
@@ -113,7 +112,7 @@ public class OptionalHardwareUtil {
         private boolean hasHardware;
         private boolean success;
 
-        public HardwareSuccessResponse(boolean hasHardware, boolean success) {
+        private HardwareSuccessResponse(boolean hasHardware, boolean success) {
             this.hasHardware = hasHardware;
             this.success = success;
         }
@@ -123,21 +122,35 @@ public class OptionalHardwareUtil {
          * 
          * @param errorCode
          */
-        public HardwareSuccessResponse(StatusCode errorCode) {
-            this.hasHardware = true;
+        public static HardwareSuccessResponse from(StatusCode errorCode) {
             if (RobotBase.isReal()) {
-                this.success = !errorCode.isError();
+                return new HardwareSuccessResponse(true, !errorCode.isError());
             } else {
-                this.success = true;
+                return new HardwareSuccessResponse(true, true);
             }
+        }
+
+        /**
+         * hardware is true, success is based on boolean
+         * 
+         * @param bool
+         */
+        public static HardwareSuccessResponse from(Boolean bool) {
+            return new HardwareSuccessResponse(true, bool);
+        }
+
+        /**
+         * hardware is true, success is true
+         */
+        public static HardwareSuccessResponse success() {
+            return new HardwareSuccessResponse(true, true);
         }
 
         /**
          * hardware is false, success is false
          */
-        public HardwareSuccessResponse() {
-            this.hasHardware = false;
-            this.success = false;
+        public static HardwareSuccessResponse empty() {
+            return new HardwareSuccessResponse(false, false);
         }
 
         public boolean hasHardware() {

@@ -61,9 +61,9 @@ public class Mcq_CanCoder {
      */
     public <T> HardwareValueResponse<T> withCANCoder(Function<CANcoder, T> func) {
         if (hasCoder) {
-            return new HardwareValueResponse<T>(func.apply(canCoder));
+            return HardwareValueResponse.contains(func.apply(canCoder));
         }
-        return new HardwareValueResponse<T>();
+        return HardwareValueResponse.empty();
     }
 
     /**
@@ -99,8 +99,10 @@ public class Mcq_CanCoder {
                 case RADIANS:
                     outVal = val * 2 * Math.PI;
             }
+        } else {
+            return HardwareValueResponse.empty();
         }
-        return new HardwareValueResponse<Double>(hasCoder, outVal);
+        return HardwareValueResponse.contains(outVal);
     }
 
     public HardwareValueResponse<Double> getPositionAbsolute(PositionUnit unitType) {
@@ -117,8 +119,10 @@ public class Mcq_CanCoder {
                 case RADIANS:
                     outVal = val * 2 * Math.PI;
             }
+        } else {
+            return HardwareValueResponse.empty();
         }
-        return new HardwareValueResponse<Double>(hasCoder, outVal);
+        return HardwareValueResponse.contains(outVal);
     }
 
     public HardwareValueResponse<Double> getVelocity(VelocityUnit unitType) {
@@ -133,8 +137,10 @@ public class Mcq_CanCoder {
                 case TICKS_PER_100MS:
                     outVal = val * 4096 * 10;
             }
+        } else {
+            return HardwareValueResponse.empty();
         }
-        return new HardwareValueResponse<Double>(hasCoder, outVal);
+        return HardwareValueResponse.contains(outVal);
     }
 
     public HardwareValueResponse<Boolean> hasCANcoderReached(PositionUnit units, double value, double tolerance) {
@@ -154,12 +160,12 @@ public class Mcq_CanCoder {
                 pos = value / (2 * Math.PI);
                 tol = tolerance / (2 * Math.PI);
             } else {
-                return new HardwareValueResponse<Boolean>();
+                return HardwareValueResponse.empty();
             }
-            return new HardwareValueResponse<Boolean>(
+            return HardwareValueResponse.contains(
                     Math.abs(pos - this.getPosition(PositionUnit.REVOLUTIONS).getValue()) < tol);
         }
-        return new HardwareValueResponse<Boolean>();
+        return HardwareValueResponse.empty();
     }
 
     public HardwareValueResponse<Boolean> hasCANcoderReached(VelocityUnit units, double value, double tolerance) {
@@ -176,12 +182,12 @@ public class Mcq_CanCoder {
                 vel = value / 4096.0 / 10.0;
                 tol = tolerance / 4096.0 / 10.0;
             } else {
-                return new HardwareValueResponse<Boolean>();
+                return HardwareValueResponse.empty();
             }
-            return new HardwareValueResponse<Boolean>(
+            return HardwareValueResponse.contains(
                     Math.abs(vel - this.getVelocity(VelocityUnit.RPS).getValue()) < tol);
         }
-        return new HardwareValueResponse<Boolean>();
+        return HardwareValueResponse.empty();
     }
 
     public HardwareSuccessResponse setInverted(boolean inverted) {
@@ -190,17 +196,17 @@ public class Mcq_CanCoder {
             canCoder.getConfigurator().refresh(cfg);
             cfg.SensorDirection = inverted ? SensorDirectionValue.Clockwise_Positive
                     : SensorDirectionValue.CounterClockwise_Positive;
-            return new HardwareSuccessResponse(canCoder.getConfigurator().apply(cfg));
+            return HardwareSuccessResponse.from(canCoder.getConfigurator().apply(cfg));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
     }
 
     public HardwareSuccessResponse setSensorPosition(double position) {
         if (hasCoder) {
             // TODO: is this absolute or relative?
-            return new HardwareSuccessResponse(canCoder.setPosition(position));
+            return HardwareSuccessResponse.from(canCoder.setPosition(position));
         }
-        return new HardwareSuccessResponse();
+        return HardwareSuccessResponse.empty();
 
     }
 }

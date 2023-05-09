@@ -1,11 +1,12 @@
 package com.igknighters.controllers;
 
+import com.igknighters.constants.ConstValues;
 import com.igknighters.subsystems.Resources.Subsystems;
 
 public class TestingController extends ControllerParent {
-
     public TestingController(int port) {
-        super(port);
+        super(port, ConstValues.DEBUG);
+
         // disregard null safety as it is checked on assignment
 
         /// FACE BUTTONS

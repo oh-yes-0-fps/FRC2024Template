@@ -6,7 +6,7 @@ import com.igknighters.subsystems.Resources.Subsystems;
 public class DriverController extends ControllerParent {
 
     public DriverController(int port) {
-        super(port);
+        super(port, true);
         // disregard null safety for subsystems as it is checked on assignment
 
         /// FACE BUTTONS

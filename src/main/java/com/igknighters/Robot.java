@@ -4,10 +4,8 @@
 
 package com.igknighters;
 
-import com.igknighters.constants.ConstValues;
-import com.igknighters.util.logging.LogInit;
+import com.igknighters.util.logging.DataLogger;
 
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -29,9 +27,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void robotInit() {
-        LogInit.init();
-        RobotContainer.controllerInit();
-        DriverStation.silenceJoystickConnectionWarning(ConstValues.DEBUG);
+        RobotContainer.robotStartup();
     }
 
     /**
@@ -47,32 +43,17 @@ public class Robot extends TimedRobot {
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
+        DataLogger.update();
     }
 
-    /**
-     * This autonomous (along with the chooser code above) shows how to select
-     * between different
-     * autonomous modes using the dashboard. The sendable chooser code works with
-     * the Java
-     * SmartDashboard. If you prefer the LabVIEW Dashboard, remove all of the
-     * chooser code and
-     * uncomment the getString line to get the auto name from the text box below the
-     * Gyro
-     *
-     * <p>
-     * You can add additional auto modes by adding additional comparisons to the
-     * switch structure
-     * below with additional strings. If using the SendableChooser make sure to add
-     * them to the
-     * chooser code above as well.
-     */
+    /** This function is called once when autonomous is enabled. */
     @Override
     public void autonomousInit() {
         RobotContainer.autoInit();
         RobotContainer.enabledInit();
     }
 
-    /** This function is called periodically during autonomous. */
+    /** This function is called periodically(every 20ms) during autonomous. */
     @Override
     public void autonomousPeriodic() {
         RobotContainer.autoPeriodic();
@@ -86,7 +67,7 @@ public class Robot extends TimedRobot {
         RobotContainer.enabledInit();
     }
 
-    /** This function is called periodically during operator control. */
+    /** This function is called periodically(every 20ms) during operator control. */
     @Override
     public void teleopPeriodic() {
         RobotContainer.teleopPeriodic();
@@ -100,7 +81,7 @@ public class Robot extends TimedRobot {
         RobotContainer.disabledInit();
     }
 
-    /** This function is called periodically when disabled. */
+    /** This function is called periodically(every 20ms) when disabled. */
     @Override
     public void disabledPeriodic() {
         RobotContainer.disabledPeriodic();
@@ -114,7 +95,7 @@ public class Robot extends TimedRobot {
         RobotContainer.enabledInit();
     }
 
-    /** This function is called periodically during test mode. */
+    /** This function is called periodically(every 20ms) during test mode. */
     @Override
     public void testPeriodic() {
         RobotContainer.testPeriodic();
@@ -127,7 +108,7 @@ public class Robot extends TimedRobot {
         RobotContainer.simulationInit();
     }
 
-    /** This function is called periodically whilst in simulation. */
+    /** This function is called periodically(every 20ms) whilst in simulation. */
     @Override
     public void simulationPeriodic() {
         RobotContainer.simulationPeriodic();

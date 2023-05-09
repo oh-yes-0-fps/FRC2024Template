@@ -12,7 +12,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class ControllerParent {
-    private static CommandXboxController controller;
+    private CommandXboxController controller;
+    private boolean madeController;
 
     protected class TriggerBindingTuple {
         public final Trigger trigger;
@@ -32,7 +33,7 @@ public class ControllerParent {
         public boolean isBound();
     }
 
-    protected static class SingleDepBinding implements Binding{
+    protected static class SingleDepBinding implements Binding {
         public final Subsystems subsystem;
         public final Boolean empty;
         public final BiConsumer<Trigger, AllSubsystems> action;
@@ -105,8 +106,11 @@ public class ControllerParent {
 
     protected TriggerBindingTuple A, B, X, Y, LB, RB, Back, Start, LS, RS, LT, RT, DPR, DPD, DPL, DPU;
 
-    public ControllerParent(int port) {
-        controller = new CommandXboxController(port);
+    public ControllerParent(int port, boolean makeController) {
+        this.madeController = makeController;
+        if (madeController) {
+            controller = new CommandXboxController(port);
+        }
         A = new TriggerBindingTuple(controller.a(), SingleDepBinding.empty());
         B = new TriggerBindingTuple(controller.b(), SingleDepBinding.empty());
         X = new TriggerBindingTuple(controller.x(), SingleDepBinding.empty());
@@ -125,11 +129,14 @@ public class ControllerParent {
         DPU = new TriggerBindingTuple(controller.povUp(), SingleDepBinding.empty());
     }
 
-    public void AssignButtons(AllSubsystems subsystems) {
+    public void assignButtons(AllSubsystems subsystems) {
+        if (!madeController) {
+            return;
+        }
         HashSet<Subsystems> subsystemSet = new HashSet<Subsystems>(
                 Arrays.asList(subsystems.getEnabledSubsystemEnums()));
         TriggerBindingTuple[] tuples = new TriggerBindingTuple[] {
-            A, B, X, Y, LB, RB, Back, Start, LS, RS, LT, RT, DPR, DPD, DPL, DPU };
+                A, B, X, Y, LB, RB, Back, Start, LS, RS, LT, RT, DPR, DPD, DPL, DPU };
         for (int i = 0; i < tuples.length; i++) {
             TriggerBindingTuple tuple = tuples[i];
             if (tuple.binding.hasDeps(subsystemSet)) {
@@ -138,27 +145,29 @@ public class ControllerParent {
         }
     }
 
-    public Supplier<Double> RightStickX() {
+    public Supplier<Double> rightStickX() {
         return () -> controller.getRightX();
     }
 
-    public Supplier<Double> RightStickY() {
+    public Supplier<Double> rightStickY() {
         return () -> controller.getRightY();
     }
 
-    public Supplier<Double> LeftStickX() {
+    public Supplier<Double> leftStickX() {
         return () -> controller.getLeftX();
     }
 
-    public Supplier<Double> LeftStickY() {
+    public Supplier<Double> leftStickY() {
         return () -> controller.getLeftY();
     }
 
     /**
      * will print warning if this trigger is also bound to a command
-     * @param suppressWarning if true will not print warning even if bound to a command
+     * 
+     * @param suppressWarning if true will not print warning even if bound to a
+     *                        command
      */
-    public Supplier<Double> RightTrigger(boolean suppressWarning) {
+    public Supplier<Double> rightTrigger(boolean suppressWarning) {
         if (RT.binding.isBound() && !suppressWarning) {
             return () -> {
                 System.out.println("WARNING: Right Trigger is bound to a command");
@@ -171,9 +180,11 @@ public class ControllerParent {
 
     /**
      * will print warning if this trigger is also bound to a command
-     * @param suppressWarning if true will not print warning even if bound to a command
+     * 
+     * @param suppressWarning if true will not print warning even if bound to a
+     *                        command
      */
-    public Supplier<Double> LeftTrigger(boolean suppressWarning) {
+    public Supplier<Double> leftTrigger(boolean suppressWarning) {
         if (LT.binding.isBound() && !suppressWarning) {
             return () -> {
                 System.out.println("WARNING: Left Trigger is bound to a command");

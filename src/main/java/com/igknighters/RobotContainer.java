@@ -6,29 +6,27 @@ import com.igknighters.controllers.DriverController;
 import com.igknighters.controllers.OperatorController;
 import com.igknighters.controllers.TestingController;
 import com.igknighters.subsystems.Resources.AllSubsystems;
+import com.igknighters.util.logging.LogInit;
+
+import edu.wpi.first.wpilibj.DriverStation;
 
 public class RobotContainer {
-    
+
     private static final AllSubsystems allSubsystems = new AllSubsystems(RobotSetup.getRobotID().subsystems);
 
     private static final DriverController driverController = new DriverController(0);
     private static final OperatorController operatorController = new OperatorController(1);
     private static final TestingController testingController = new TestingController(3);
 
-    public static void controllerInit() {
-        driverController.AssignButtons(allSubsystems);
-        operatorController.AssignButtons(allSubsystems);
-        if (ConstValues.DEBUG) {
-            testingController.AssignButtons(allSubsystems);
-        }
+    public static void robotStartup() {
+        driverController.assignButtons(allSubsystems);
+        operatorController.assignButtons(allSubsystems);
+        testingController.assignButtons(allSubsystems);
+        LogInit.init();
+        DriverStation.silenceJoystickConnectionWarning(ConstValues.DEBUG);
     }
 
-
-
-
-
-
-    ///INITIALIZATION
+    /// INITIALIZATION
     /**
      * Runs on teleop init, test init and auto init
      */
@@ -47,8 +45,8 @@ public class RobotContainer {
     public static void autoInit() {
     }
 
-    ///PERIODIC
-    //keep these as light as possible
+    /// PERIODIC
+    // keep these as light as possible
     /**
      * Runs on teleop periodic, test periodic and auto periodic
      */
@@ -67,7 +65,7 @@ public class RobotContainer {
     public static void autoPeriodic() {
     }
 
-    ///SIMULATION
+    /// SIMULATION
     public static void simulationInit() {
     }
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.igknighters.constants.ConstValues;
 import com.igknighters.constants.RobotSetup;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -35,11 +36,13 @@ public class LogInit {
             instance.getEntry("/gitCommit").setString(commit);
             instance.getEntry("/deployedFrom/gitUser").setString(user);
             instance.getEntry("/deployedFrom/hostname").setString(hostname);
+            instance.getEntry("/debug").setBoolean(ConstValues.DEBUG);
 
             DataLogger.oneShotString("/RealMetadata/GitBranch", branch);
             DataLogger.oneShotString("/RealMetadata/GitCommit", commit);
             DataLogger.oneShotString("/RealMetadata/GitUser", user);
             DataLogger.oneShotString("/RealMetadata/Hostname", hostname);
+            DataLogger.oneShotBoolean("/Debug", ConstValues.DEBUG);
         } catch (IOException e) {
             System.err.println("Could not read git information files.");
         }

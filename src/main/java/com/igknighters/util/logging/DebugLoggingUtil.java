@@ -2,7 +2,6 @@ package com.igknighters.util.logging;
 
 import com.igknighters.constants.ConstValues;
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.*;
 
 import java.util.Map;
@@ -304,10 +303,6 @@ public class DebugLoggingUtil {
         if(isDebugging != null) {
             return;
         }
-        if (DriverStation.isFMSAttached()) {
-            DebugLoggingUtil.isDebugging = false;
-        } else {
-            DebugLoggingUtil.isDebugging = ConstValues.DEBUG;
-        }
+        DebugLoggingUtil.isDebugging = ConstValues.DEBUG;
     }
 }

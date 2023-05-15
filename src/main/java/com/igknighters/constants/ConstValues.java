@@ -1,5 +1,6 @@
 package com.igknighters.constants;
 
+import com.igknighters.constants.ConstantHelper.BooleanConst;
 import com.igknighters.constants.ConstantHelper.ConstClass;
 import com.igknighters.constants.ConstantHelper.StringConst;
 import com.igknighters.constants.ConstantHelper.TunnableIgnore;
@@ -17,6 +18,9 @@ public class ConstValues {
         public static int LENGTH = 26;
 
         @StringConst(yin = "yin", yang = "yang")
-        public static String ROBOT_NAME = null;
+        public static String ROBOT_NAME;
+
+        @BooleanConst(yin = true, yang = false)
+        public static boolean secondBoomMotor;
     }
 }

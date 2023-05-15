@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.util.Optional;
 
 import com.igknighters.constants.RobotSetup.RobotConstID;
+import com.igknighters.util.logging.BootupLogger;
 import com.igknighters.util.testing.TunnableValuesAPI;
 
 import edu.wpi.first.networktables.NetworkTable;
@@ -187,5 +188,9 @@ public class ConstantHelper {
         for (Class<?> clazz : consts.getDeclaredClasses()) {
             handleConstSubclass(clazz, rootTable, ConstValues.DEBUG);
         }
+        for (Field field : consts.getDeclaredFields()) {
+            handleConstField(field, consts, rootTable, ConstValues.DEBUG);
+        }
+        BootupLogger.BootupLog("Finished applying constants");
     }
 }

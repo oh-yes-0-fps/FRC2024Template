@@ -52,10 +52,17 @@ public class ConstantHelper {
     @Target({ ElementType.TYPE })
     public @interface ConstClass {}
 
+    /**Still puts the value on network tables but changing it doesn't change the const value */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.TYPE, ElementType.FIELD })
     public @interface TunnableIgnore {}
 
+    /**Doesn't put the value on network tables at all */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.TYPE, ElementType.FIELD })
+    public @interface NTIgnore {}
+
+    //TODO: make this recurse over sub classes of sub classes
     public static void applyRoboConst(Class<ConstValues> consts) {
         NetworkTable ntConst;
         if (ConstValues.DEBUG) {
@@ -63,15 +70,15 @@ public class ConstantHelper {
         }
         RobotConst constID = RobotSetup.getRobotID().constID;
         for (Class<?> cls : consts.getDeclaredClasses()) {
-            boolean clsIsTunnable = !cls.isAnnotationPresent(TunnableIgnore.class);
+            boolean clsIgnoreNT = !cls.isAnnotationPresent(NTIgnore.class);
             if (cls.isAnnotationPresent(ConstClass.class)) {
                 NetworkTable ntSubTable = null;
-                if (ConstValues.DEBUG && clsIsTunnable) {
+                if (ConstValues.DEBUG && clsIgnoreNT) {
                     ntSubTable = ntConst.getSubTable(cls.getSimpleName());
                 }
                 for (Field field : cls.getDeclaredFields()) {
                     field.setAccessible(true);
-                    boolean fieldIsTunnable = !field.isAnnotationPresent(TunnableIgnore.class);
+                    boolean fieldIgnoreNT = !field.isAnnotationPresent(NTIgnore.class);
                     if (field.isAnnotationPresent(IntConst.class)) {
                         try {
                             IntConst annotation = field.getAnnotation(IntConst.class);
@@ -121,7 +128,7 @@ public class ConstantHelper {
                             e.printStackTrace();
                         }
                     }
-                    boolean tunnable = (ConstValues.DEBUG && clsIsTunnable && fieldIsTunnable);
+                    boolean tunnable = (ConstValues.DEBUG && clsIgnoreNT && fieldIgnoreNT);
                     if ((field.getType().isPrimitive() || field.getType() == String.class) && tunnable) {
                         NetworkTableEntry entry = ntSubTable.getEntry(field.getName());
                         try {
@@ -129,22 +136,33 @@ public class ConstantHelper {
                         } catch (IllegalAccessException e) {
                             DriverStation.reportError("Error setting value for " + cls.getName() + "." + field.getName(), false);
                         }
-                        TunnableValuesAPI.addTunnableRunnable(() -> {
-                            try {
-                                Class<?> type = field.getType();
-                                if (type == int.class) {
-                                    field.setInt(consts, (int) entry.getInteger(0));
-                                } else if (type == double.class) {
-                                    field.setDouble(consts, entry.getDouble(0));
-                                } else if (type == String.class) {
-                                    field.set(consts, entry.getString(""));
-                                } else if (type == boolean.class) {
-                                    field.setBoolean(consts, entry.getBoolean(false));
+                        if (!field.isAnnotationPresent(TunnableIgnore.class)) {
+                            TunnableValuesAPI.addTunnableRunnable(() -> {
+                                try {
+                                    Class<?> type = field.getType();
+                                    if (type == int.class) {
+                                        field.setInt(consts, (int) entry.getInteger(0));
+                                    } else if (type == double.class) {
+                                        field.setDouble(consts, entry.getDouble(0));
+                                    } else if (type == String.class) {
+                                        field.set(consts, entry.getString(""));
+                                    } else if (type == boolean.class) {
+                                        field.setBoolean(consts, entry.getBoolean(false));
+                                    }
+                                } catch (IllegalAccessException e) {
+                                    DriverStation.reportError("Error setting value for " + cls.getName() + "." + field.getName(), false);
                                 }
-                            } catch (IllegalAccessException e) {
-                                DriverStation.reportError("Error setting value for " + cls.getName() + "." + field.getName(), false);
-                            }
-                        });
+                            });
+                        } else {
+                            //makes the value "immutable" on nt by just repeatedly setting it
+                            TunnableValuesAPI.addTunnableRunnable(() -> {
+                                try {
+                                    entry.setValue(field.get(consts));
+                                } catch (IllegalAccessException e) {
+                                    DriverStation.reportError("Error setting value for " + cls.getName() + "." + field.getName(), false);
+                                }
+                            });
+                        }
                     }
                 }
             }

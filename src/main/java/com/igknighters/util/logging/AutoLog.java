@@ -12,6 +12,8 @@ import java.util.LinkedHashSet;
 import java.util.function.Supplier;
 
 import com.igknighters.constants.ConstValues;
+import com.igknighters.util.utilPeriodic;
+import com.igknighters.util.utilPeriodic.Frequency;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -24,6 +26,10 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 public class AutoLog {
 
     private static final Collection<Runnable> smartdashboardRunnables = new LinkedHashSet<>();
+    static {
+        utilPeriodic.addPeriodicRunnable(
+            "SmartDashboard", () -> smartdashboardRunnables.forEach(Runnable::run), Frequency.EveryOtherCycle);
+    }
 
     /**When debug is false and shuffleboard are redirected to datalog
      * the datalog path will be kept under NT/Shuffleboard/.../.../...

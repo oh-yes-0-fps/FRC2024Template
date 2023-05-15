@@ -14,6 +14,7 @@ public class TunnableValuesAPI {
     private static final Collection<Runnable> tunnableRunnables = new LinkedHashSet<>();
     private static final NetworkTable tunnableNetworkTable = NetworkTableInstance.getDefault().getTable("TunnableValues");
 
+    /**Expect anywhere from 20-120ms latency due to the segment optimization */
     public static void addTunnableRunnable(Runnable runnable) {
         tunnableRunnables.add(runnable);
     }
@@ -30,11 +31,11 @@ public class TunnableValuesAPI {
     static {
         if (ConstValues.DEBUG) {
             utilPeriodic.addPeriodicRunnable("Tunnable Updating", () -> {
-                if (tunnableRunnables.size() < 100) {
+                if (tunnableRunnables.size() < 60) {
                     tunnableRunnables.forEach(Runnable::run);
                 } else {
                     //makes it only run ~20% of the runnables each cycle, increases latency but decreases cpu usage
-                    int segmentSize = tunnableRunnables.size() / 5 + 5;
+                    int segmentSize = tunnableRunnables.size() / 5 + 2;
                     for (int i = lastRan; i < lastRan + segmentSize; i++) {
                         if (i >= tunnableRunnables.size()) {
                             lastRan = 0;

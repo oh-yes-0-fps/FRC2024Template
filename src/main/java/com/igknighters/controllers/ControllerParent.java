@@ -114,6 +114,7 @@ public class ControllerParent {
             BootupLogger.BootupLog("Controller " + port + " initialized");
         } else {
             BootupLogger.BootupLog("Controller " + port + " not initialized");
+            return;
         }
         A = new TriggerBindingTuple(controller.a(), SingleDepBinding.empty());
         B = new TriggerBindingTuple(controller.b(), SingleDepBinding.empty());

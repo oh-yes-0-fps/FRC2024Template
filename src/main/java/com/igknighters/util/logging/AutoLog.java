@@ -17,12 +17,14 @@ import com.igknighters.util.testing.TunnableValuesAPI;
 import com.igknighters.util.utilPeriodic.Frequency;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.shuffleboard.SuppliedValueWidget;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class AutoLog {
 
@@ -33,10 +35,11 @@ public class AutoLog {
     }
 
     /**When debug is false and shuffleboard are redirected to datalog
-     * the datalog path will be kept under NT/Shuffleboard/.../.../...
+     * if true the datalog path will be kept under NT/Shuffleboard/.../.../...
      * Beneficial for automatic analysis of logs not needing to look 2 places
      */
-    private static final boolean shuffleboardKeepsDLpath = true;
+    private static final boolean datalogKeepsShuffleboardPath = true;
+    private static final String shuffleboardDLpath = "NT/Shuffleboard/";
 
     private static String camelToNormal(String camelCase) {
         StringBuilder sb = new StringBuilder();
@@ -650,8 +653,19 @@ public class AutoLog {
         }
     }
 
-    public static void setupSubsystemLogging(Subsystem subsystem) {
+    public static void setupSubsystemLogging(SubsystemBase subsystem) {
         String ss_name = subsystem.getClass().getSimpleName();
+        if (ConstValues.DEBUG){
+            Shuffleboard.getTab(ss_name).add(subsystem);
+        } else {
+            String pathPrefix;
+            if (datalogKeepsShuffleboardPath) {
+                pathPrefix = shuffleboardDLpath + "/" + ss_name;
+            } else {
+                pathPrefix = "";
+            }
+            DataLogger.addSendable(subsystem, pathPrefix);
+        }
         for (Field field : subsystem.getClass().getDeclaredFields()) {
             String loggerPort = "";
             if (field.isAnnotationPresent(SSL.DataLog.class)) {
@@ -687,9 +701,9 @@ public class AutoLog {
                     shuffleboardWidgetHelper(getSupplier(field, subsystem), type, name, ss_name, annotation);
                 } else {
                     String path = "";
-                    if (shuffleboardKeepsDLpath) {
+                    if (datalogKeepsShuffleboardPath) {
                         //TODO: the dl source metadata is not being emulated, not sure if it matters though
-                        path = "NT/Shuffleboard/" + ss_name + "/" + name;
+                        path = shuffleboardDLpath + ss_name + "/" + name;
                     } else {
                         path = ss_name + "/" + name;
                     }
@@ -703,38 +717,40 @@ public class AutoLog {
                 }
                 field.setAccessible(true);
                 String name = field.getName();
-                if (field.getType() == boolean.class) {
-                    NetworkTableEntry entry = TunnableValuesAPI.getTunnableNTEntry(ss_name, name);
-                    try {
-                        entry.setBoolean(field.getBoolean(subsystem));
-                        entry.setDefaultBoolean(field.getBoolean(subsystem));
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportError("Error setting tunnable value for " + ss_name + "/" + name, false);
-                    }
-                    TunnableValuesAPI.addTunnableRunnable(() -> {
+                if (ConstValues.DEBUG) {
+                    if (field.getType() == boolean.class) {
+                        NetworkTableEntry entry = TunnableValuesAPI.getTunnableNTEntry(ss_name, name);
                         try {
-                            field.setBoolean(subsystem, entry.getBoolean(field.getBoolean(subsystem)));
+                            entry.setBoolean(field.getBoolean(subsystem));
+                            entry.setDefaultBoolean(field.getBoolean(subsystem));
                         } catch (IllegalArgumentException | IllegalAccessException e) {
                             DriverStation.reportError("Error setting tunnable value for " + ss_name + "/" + name, false);
                         }
-                    });
-                } else if (field.getType() == double.class) {
-                    NetworkTableEntry entry = TunnableValuesAPI.getTunnableNTEntry(ss_name, name);
-                    try {
-                        entry.setDouble(field.getDouble(subsystem));
-                        entry.setDefaultDouble(field.getDouble(subsystem));
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportError("Error setting tunnable value for " + ss_name + "/" + name, true);
-                    }
-                    TunnableValuesAPI.addTunnableRunnable(() -> {
+                        TunnableValuesAPI.addTunnableRunnable(() -> {
+                            try {
+                                field.setBoolean(subsystem, entry.getBoolean(field.getBoolean(subsystem)));
+                            } catch (IllegalArgumentException | IllegalAccessException e) {
+                                DriverStation.reportError("Error setting tunnable value for " + ss_name + "/" + name, false);
+                            }
+                        });
+                    } else if (field.getType() == double.class) {
+                        NetworkTableEntry entry = TunnableValuesAPI.getTunnableNTEntry(ss_name, name);
                         try {
-                            field.setDouble(subsystem, entry.getDouble(field.getDouble(subsystem)));
+                            entry.setDouble(field.getDouble(subsystem));
+                            entry.setDefaultDouble(field.getDouble(subsystem));
                         } catch (IllegalArgumentException | IllegalAccessException e) {
                             DriverStation.reportError("Error setting tunnable value for " + ss_name + "/" + name, true);
                         }
-                    });
-                } else {
-                    throw new IllegalArgumentException("Tunnable annotation can only be used on boolean or double [primitive] fields");
+                        TunnableValuesAPI.addTunnableRunnable(() -> {
+                            try {
+                                field.setDouble(subsystem, entry.getDouble(field.getDouble(subsystem)));
+                            } catch (IllegalArgumentException | IllegalAccessException e) {
+                                DriverStation.reportError("Error setting tunnable value for " + ss_name + "/" + name, true);
+                            }
+                        });
+                    } else {
+                        throw new IllegalArgumentException("Tunnable annotation can only be used on boolean or double [primitive] fields");
+                    }
                 }
                 loggerPort = "Tunnable";
             }
@@ -774,9 +790,9 @@ public class AutoLog {
                     shuffleboardWidgetHelper(getSupplier(method, subsystem), type, name, ss_name, annotation);
                 } else {
                     String path = "";
-                    if (shuffleboardKeepsDLpath) {
+                    if (datalogKeepsShuffleboardPath) {
                         //TODO: the dl source metadata is not being emulated, not sure if it matters though
-                        path = "NT/Shuffleboard/" + ss_name + "/" + name;
+                        path = shuffleboardDLpath + ss_name + "/" + name;
                     } else {
                         path = ss_name + "/" + name;
                     }

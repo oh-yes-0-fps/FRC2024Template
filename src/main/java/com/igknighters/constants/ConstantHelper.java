@@ -162,7 +162,6 @@ public class ConstantHelper {
         boolean clsIgnoreNT = cls.isAnnotationPresent(NTIgnore.class) || !rootTable.isPresent();
         boolean isTunnable = (tunnable && !cls.isAnnotationPresent(TunnableIgnore.class));
         for (Class<?> clazz : cls.getDeclaredClasses()) {
-            System.out.println("bleh");
             if (clsIgnoreNT) {
                 handleConstSubclass(clazz, Optional.empty(), false);
             } else {

@@ -11,12 +11,7 @@ import edu.wpi.first.wpilibj.Timer;
 public class utilPeriodic {
     private static final HashMap<String, Runnable> periodicRunnables = new HashMap<>();
     private static final HashMap<Frequency, Integer> frequencyMap = new HashMap<>();
-    private static final NetworkTable periodicTimesTable;
-    static {
-        if (ConstValues.DEBUG) {
-            periodicTimesTable = NetworkTableInstance.getDefault().getTable("PeriodicTimes");
-        }
-    }
+    private static final NetworkTable periodicTimesTable = NetworkTableInstance.getDefault().getTable("PeriodicTimes");
 
     public static void periodic() {
         if (ConstValues.DEBUG) {

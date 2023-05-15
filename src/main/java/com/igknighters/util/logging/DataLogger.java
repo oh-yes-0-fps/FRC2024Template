@@ -1,9 +1,13 @@
 package com.igknighters.util.logging;
 
 import edu.wpi.first.util.datalog.*;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.DataLogManager;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -11,6 +15,7 @@ import com.igknighters.util.utilPeriodic;
 
 public class DataLogger {
     private static final Map<DataLogEntry, Supplier<?>> dataLogMap = new HashMap<>();
+    private static final Collection<DataLogSendableBuilder> sendables = new LinkedHashSet<>();
     private static final DataLog log = DataLogManager.getLog();
 
     public static void oneShotBooleanArray(String entryName, boolean[] value) {
@@ -105,6 +110,19 @@ public class DataLogger {
         dataLogMap.put(entry, valueSupplier);
     }
 
+    public static void addSendable(Sendable sendable, String pathPrefix) {
+        String name = SendableRegistry.getName(sendable);
+        String prefix;
+        if (!pathPrefix.endsWith("/")) {
+            prefix = pathPrefix + "/" + name + "/";
+        } else {
+            prefix = pathPrefix + name + "/";
+        }
+        var builder = new DataLogSendableBuilder(prefix);
+        sendable.initSendable(builder);
+        sendables.add(builder);
+    }
+
     public static void update() {
         for (Map.Entry<DataLogEntry, Supplier<?>> entry : dataLogMap.entrySet()) {
             var key = entry.getKey();
@@ -143,6 +161,7 @@ public class DataLogger {
                 ((StringLogEntry) key).append((String) val);
             }
         }
+        sendables.forEach(DataLogSendableBuilder::update);
     }
     static {
         utilPeriodic.addPeriodicRunnable("DataLogger", DataLogger::update);

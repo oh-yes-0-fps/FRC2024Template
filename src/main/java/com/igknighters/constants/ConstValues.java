@@ -6,7 +6,7 @@ import com.igknighters.constants.ConstantHelper.*;
 public class ConstValues {
     // you can put global vars here aswell
     @NTIgnore
-    public static final boolean DEBUG = true; // this should be false for competition
+    public static final boolean DEBUG = false; // this should be false for competition
 
     // this is how you access the constants on a per subsystem basis
     public static class kExample {

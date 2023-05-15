@@ -23,17 +23,17 @@ public class RobotSetup {
     }
 
     public enum RobotID {
-        RobotA("RobotA",
+        RobotA("Yin",
                 Subsystems.list(Subsystems.Example), // can be constructed with enums
                 RobotConstID.YIN),
 
-        RobotB("RobotB",
+        RobotB("Yang",
                 Subsystems.list("Example"), // can be constructed with strings(pascal case)
                 RobotConstID.YANG),
 
-        TestBoard("testBoard", Subsystems.none(), RobotConstID.YIN),
+        TestBoard("testBoard(yin)", Subsystems.none(), RobotConstID.YIN),
 
-        Simulation("simulation", Subsystems.all(), RobotConstID.YIN),
+        Simulation("simulation(yin)", Subsystems.all(), RobotConstID.YIN),
 
         // this will never be used as if this is hit an error will already have been thrown
         Unlabeled("", Subsystems.none(), RobotConstID.YANG);

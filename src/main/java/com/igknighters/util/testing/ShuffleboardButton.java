@@ -1,5 +1,6 @@
 package com.igknighters.util.testing;
 
+import com.igknighters.util.utilPeriodic;
 import com.igknighters.util.logging.DebugLoggingUtil.DebugLayout;
 import com.igknighters.util.logging.DebugLoggingUtil.DebugTab;
 
@@ -10,23 +11,23 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.shuffleboard.SimpleWidget;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class ShuffleboardButton {
     GenericEntry entry;
     SimpleWidget widget;
-    EventLoop eventLoop;
+    private static final EventLoop eventLoop = new EventLoop();
+    static {
+        utilPeriodic.addPeriodicRunnable("ShuffleboardButtons", eventLoop::poll);
+    }
     boolean testOnly = false;
 
     public ShuffleboardButton(ShuffleboardTab tab, String name) {
-        eventLoop = CommandScheduler.getInstance().getDefaultButtonLoop();
         widget = tab.add(name, false)
             .withWidget("Toggle Button");
         entry = widget.getEntry();
     }
 
     public ShuffleboardButton(ShuffleboardLayout layout, String name) {
-        eventLoop = CommandScheduler.getInstance().getDefaultButtonLoop();
         widget = layout.add(name, false)
         .withWidget("Toggle Button");
         entry = widget.getEntry();
@@ -151,14 +152,6 @@ public class ShuffleboardButton {
 
     public ShuffleboardButton testOnly() {
         testOnly = true;
-        return this;
-    }
-
-    /**
-     * Has to be set before any actions are set if you want to use custom loop
-     */
-    public ShuffleboardButton withEventLoop(EventLoop eventLoop) {
-        this.eventLoop = eventLoop;
         return this;
     }
 

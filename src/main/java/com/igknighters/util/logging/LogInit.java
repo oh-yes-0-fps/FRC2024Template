@@ -62,11 +62,6 @@ public class LogInit {
         if (RobotBase.isReal()) {
             DataLogManager.start("/U");
         } else {
-            // PhotonVision hardware-in-the-loop
-            // NetworkTableInstance.getDefault().stopServer();
-            // NetworkTableInstance.getDefault().setServer("10.31.73.2");
-            // NetworkTableInstance.getDefault().startClient4("testing");
-
             try {
                 Files.createDirectories(Path.of("./logs/simulation"));
             } catch (IOException ignored) {

@@ -6,6 +6,7 @@ import com.igknighters.util.logging.AutoLog;
 import com.igknighters.util.logging.BootupLogger;
 
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Resources {
 
@@ -86,11 +87,11 @@ public class Resources {
             this.subsystem = subsystem;
             this.enabled = enabled;
         }
-        public static <T extends Subsystem & McqSubsystemRequirements> OptionalSubsystem<T> contains(T subsystem) {
+        public static <T extends SubsystemBase & McqSubsystemRequirements> OptionalSubsystem<T> contains(T subsystem) {
             return new OptionalSubsystem<T>(subsystem, true);
         }
 
-        public static <T extends Subsystem & McqSubsystemRequirements> OptionalSubsystem<T> empty() {
+        public static <T extends SubsystemBase & McqSubsystemRequirements> OptionalSubsystem<T> empty() {
             return new OptionalSubsystem<T>(null, false);
         }
 
@@ -128,7 +129,7 @@ public class Resources {
             }
         }
 
-        private <T extends Subsystem & McqSubsystemRequirements> OptionalSubsystem<T> createSubsystem(T subsystem) {
+        private <T extends SubsystemBase & McqSubsystemRequirements> OptionalSubsystem<T> createSubsystem(T subsystem) {
             AutoLog.setupSubsystemLogging(subsystem);
             return OptionalSubsystem.contains(subsystem);
         }

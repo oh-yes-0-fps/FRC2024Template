@@ -1,8 +1,6 @@
 package com.igknighters.util.testing;
 
 import com.igknighters.util.utilPeriodic;
-import com.igknighters.util.logging.DebugLoggingUtil.DebugLayout;
-import com.igknighters.util.logging.DebugLoggingUtil.DebugTab;
 
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -31,14 +29,6 @@ public class ShuffleboardButton {
         widget = layout.add(name, false)
         .withWidget("Toggle Button");
         entry = widget.getEntry();
-    }
-
-    public ShuffleboardButton(DebugTab tab, String name) {
-        this(tab.getContainer(), name);
-    }
-
-    public ShuffleboardButton(DebugLayout layout, String name) {
-        this(layout.getContainer(), name);
     }
 
     /**

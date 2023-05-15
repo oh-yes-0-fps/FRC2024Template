@@ -17,7 +17,6 @@ import com.igknighters.util.testing.TunnableValuesAPI;
 import com.igknighters.util.utilPeriodic.Frequency;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -702,7 +701,6 @@ public class AutoLog {
                 } else {
                     String path = "";
                     if (datalogKeepsShuffleboardPath) {
-                        //TODO: the dl source metadata is not being emulated, not sure if it matters though
                         path = shuffleboardDLpath + ss_name + "/" + name;
                     } else {
                         path = ss_name + "/" + name;
@@ -791,7 +789,6 @@ public class AutoLog {
                 } else {
                     String path = "";
                     if (datalogKeepsShuffleboardPath) {
-                        //TODO: the dl source metadata is not being emulated, not sure if it matters though
                         path = shuffleboardDLpath + ss_name + "/" + name;
                     } else {
                         path = ss_name + "/" + name;

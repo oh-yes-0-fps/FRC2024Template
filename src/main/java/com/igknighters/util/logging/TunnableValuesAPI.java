@@ -26,9 +26,25 @@ public class TunnableValuesAPI {
         return tunnableNetworkTable.getSubTable(subsystemName).getEntry(name);
     }
 
+    private static int lastRan = 0;
     static {
         if (ConstValues.DEBUG) {
-            utilPeriodic.addPeriodicRunnable("Tunnable Updating", () -> tunnableRunnables.forEach(Runnable::run));
+            utilPeriodic.addPeriodicRunnable("Tunnable Updating", () -> {
+                if (tunnableRunnables.size() < 100) {
+                    tunnableRunnables.forEach(Runnable::run);
+                } else {
+                    //makes it only run ~20% of the runnables each cycle, increases latency but decreases cpu usage
+                    int segmentSize = tunnableRunnables.size() / 5 + 5;
+                    for (int i = lastRan; i < lastRan + segmentSize; i++) {
+                        if (i >= tunnableRunnables.size()) {
+                            lastRan = 0;
+                            break;
+                        }
+                        tunnableRunnables.toArray(new Runnable[0])[i].run();
+                    }
+                    lastRan += segmentSize;
+                }
+            });
         }
     }
 }

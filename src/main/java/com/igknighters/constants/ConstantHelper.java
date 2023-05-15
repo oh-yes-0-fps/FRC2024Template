@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.Optional;
 
-import com.igknighters.constants.RobotSetup.RobotConst;
+import com.igknighters.constants.RobotSetup.RobotConstID;
 import com.igknighters.util.logging.TunnableValuesAPI;
 
 import edu.wpi.first.networktables.NetworkTable;
@@ -49,27 +49,32 @@ public class ConstantHelper {
         boolean yang();
     }
 
-    /**Still puts the value on network tables but changing it doesn't change the const value */
+    /**
+     * Still puts the value on network tables but changing it doesn't change the
+     * const value
+     */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.TYPE, ElementType.FIELD })
-    public @interface TunnableIgnore {}
+    public @interface TunnableIgnore {
+    }
 
-    /**Doesn't put the value on network tables at all */
+    /** Doesn't put the value on network tables at all */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.TYPE, ElementType.FIELD })
-    public @interface NTIgnore {}
+    public @interface NTIgnore {
+    }
 
     public static void handleConstField(Field field, Class<?> obj, Optional<NetworkTable> rootTable, boolean tunnable) {
         boolean fieldIgnoreNT = field.isAnnotationPresent(NTIgnore.class) || !rootTable.isPresent();
         boolean isTunnable = (tunnable && !field.isAnnotationPresent(TunnableIgnore.class));
         field.setAccessible(true);
-        RobotConst constID = RobotSetup.getRobotID().constID;
+        RobotConstID constID = RobotSetup.getRobotID().constID;
         if (field.isAnnotationPresent(IntConst.class)) {
             try {
                 IntConst annotation = field.getAnnotation(IntConst.class);
-                if (constID == RobotConst.YIN) {
+                if (constID == RobotConstID.YIN) {
                     field.set(obj, annotation.yin());
-                } else if (constID == RobotConst.YANG) {
+                } else if (constID == RobotConstID.YANG) {
                     field.set(obj, annotation.yang());
                 }
                 // entry.setInteger((Long) field.get(consts));
@@ -79,9 +84,9 @@ public class ConstantHelper {
         } else if (field.isAnnotationPresent(DoubleConst.class)) {
             try {
                 DoubleConst annotation = field.getAnnotation(DoubleConst.class);
-                if (constID == RobotConst.YIN) {
+                if (constID == RobotConstID.YIN) {
                     field.set(obj, annotation.yin());
-                } else if (constID == RobotConst.YANG) {
+                } else if (constID == RobotConstID.YANG) {
                     field.set(obj, annotation.yang());
                 }
                 // entry.setDouble((double) field.get(consts));
@@ -91,9 +96,9 @@ public class ConstantHelper {
         } else if (field.isAnnotationPresent(StringConst.class)) {
             try {
                 StringConst annotation = field.getAnnotation(StringConst.class);
-                if (constID == RobotConst.YIN) {
+                if (constID == RobotConstID.YIN) {
                     field.set(obj, annotation.yin());
-                } else if (constID == RobotConst.YANG) {
+                } else if (constID == RobotConstID.YANG) {
                     field.set(obj, annotation.yang());
                 }
                 // entry.setString((String) field.get(consts));
@@ -103,9 +108,9 @@ public class ConstantHelper {
         } else if (field.isAnnotationPresent(BooleanConst.class)) {
             try {
                 BooleanConst annotation = field.getAnnotation(BooleanConst.class);
-                if (constID == RobotConst.YIN) {
+                if (constID == RobotConstID.YIN) {
                     field.set(obj, annotation.yin());
-                } else if (constID == RobotConst.YANG) {
+                } else if (constID == RobotConstID.YANG) {
                     field.set(obj, annotation.yang());
                 }
                 // entry.setBoolean((boolean) field.get(consts));
@@ -134,16 +139,18 @@ public class ConstantHelper {
                             field.setBoolean(obj, entry.getBoolean(false));
                         }
                     } catch (IllegalAccessException e) {
-                        DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(), false);
+                        DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(),
+                                false);
                     }
                 });
             } else {
-                //makes the value "immutable" on nt by just repeatedly setting it
+                // makes the value "immutable" on nt by just repeatedly setting it
                 TunnableValuesAPI.addTunnableRunnable(() -> {
                     try {
                         entry.setValue(field.get(obj));
                     } catch (IllegalAccessException e) {
-                        DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(), false);
+                        DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(),
+                                false);
                     }
                 });
             }

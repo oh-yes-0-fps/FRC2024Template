@@ -12,12 +12,12 @@ public class RobotSetup {
 
     // to make these only be constructed once each instead of once per enum theyre
     // stored in
-    public enum RobotConst {
+    public enum RobotConstID {
         YIN(0), YANG(1);
 
         public final int value;
 
-        RobotConst(int value) {
+        RobotConstID(int value) {
             this.value = value;
         }
     }
@@ -25,25 +25,25 @@ public class RobotSetup {
     public enum RobotID {
         RobotA("RobotA",
                 Subsystems.list(Subsystems.Example), // can be constructed with enums
-                RobotConst.YIN),
+                RobotConstID.YIN),
 
         RobotB("RobotB",
                 Subsystems.list("Example"), // can be constructed with strings(pascal case)
-                RobotConst.YANG),
+                RobotConstID.YANG),
 
-        TestBoard("testBoard", Subsystems.none(), RobotConst.YIN),
+        TestBoard("testBoard", Subsystems.none(), RobotConstID.YIN),
 
-        Simulation("simulation", Subsystems.all(), RobotConst.YIN),
+        Simulation("simulation", Subsystems.all(), RobotConstID.YIN),
 
         // this will never be used as if this is hit an error will already have been
         // thrown
-        Unlabeled("", Subsystems.none(), RobotConst.YANG);
+        Unlabeled("", Subsystems.none(), RobotConstID.YANG);
 
         public final String name;
         public final Subsystems[] subsystems;
-        public final RobotConst constID;
+        public final RobotConstID constID;
 
-        RobotID(String name, Subsystems[] subsystems, RobotConst constants) {
+        RobotID(String name, Subsystems[] subsystems, RobotConstID constants) {
             this.name = name;
             this.subsystems = subsystems;
             this.constID = constants;

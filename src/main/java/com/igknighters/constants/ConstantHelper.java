@@ -5,6 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.util.Optional;
 
 import com.igknighters.constants.RobotSetup.RobotConst;
 import com.igknighters.util.logging.TunnableValuesAPI;
@@ -48,10 +49,6 @@ public class ConstantHelper {
         boolean yang();
     }
 
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ ElementType.TYPE })
-    public @interface ConstClass {}
-
     /**Still puts the value on network tables but changing it doesn't change the const value */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.TYPE, ElementType.FIELD })
@@ -62,110 +59,126 @@ public class ConstantHelper {
     @Target({ ElementType.TYPE, ElementType.FIELD })
     public @interface NTIgnore {}
 
-    //TODO: make this recurse over sub classes of sub classes
-    public static void applyRoboConst(Class<ConstValues> consts) {
-        NetworkTable ntConst;
-        if (ConstValues.DEBUG) {
-            ntConst = NetworkTableInstance.getDefault().getTable("Constants");
-        }
+    public static void handleConstField(Field field, Class<?> obj, Optional<NetworkTable> rootTable, boolean tunnable) {
+        boolean fieldIgnoreNT = field.isAnnotationPresent(NTIgnore.class) || !rootTable.isPresent();
+        boolean isTunnable = (tunnable && !field.isAnnotationPresent(TunnableIgnore.class));
+        field.setAccessible(true);
         RobotConst constID = RobotSetup.getRobotID().constID;
-        for (Class<?> cls : consts.getDeclaredClasses()) {
-            boolean clsIgnoreNT = !cls.isAnnotationPresent(NTIgnore.class);
-            if (cls.isAnnotationPresent(ConstClass.class)) {
-                NetworkTable ntSubTable = null;
-                if (ConstValues.DEBUG && clsIgnoreNT) {
-                    ntSubTable = ntConst.getSubTable(cls.getSimpleName());
+        if (field.isAnnotationPresent(IntConst.class)) {
+            try {
+                IntConst annotation = field.getAnnotation(IntConst.class);
+                if (constID == RobotConst.YIN) {
+                    field.set(obj, annotation.yin());
+                } else if (constID == RobotConst.YANG) {
+                    field.set(obj, annotation.yang());
                 }
-                for (Field field : cls.getDeclaredFields()) {
-                    field.setAccessible(true);
-                    boolean fieldIgnoreNT = !field.isAnnotationPresent(NTIgnore.class);
-                    if (field.isAnnotationPresent(IntConst.class)) {
-                        try {
-                            IntConst annotation = field.getAnnotation(IntConst.class);
-                            if (constID == RobotConst.YIN) {
-                                field.set(consts, annotation.yin());
-                            } else if (constID == RobotConst.YANG) {
-                                field.set(consts, annotation.yang());
-                            }
-                            // entry.setInteger((Long) field.get(consts));
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (field.isAnnotationPresent(DoubleConst.class)) {
-                        try {
-                            DoubleConst annotation = field.getAnnotation(DoubleConst.class);
-                            if (constID == RobotConst.YIN) {
-                                field.set(consts, annotation.yin());
-                            } else if (constID == RobotConst.YANG) {
-                                field.set(consts, annotation.yang());
-                            }
-                            // entry.setDouble((double) field.get(consts));
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (field.isAnnotationPresent(StringConst.class)) {
-                        try {
-                            StringConst annotation = field.getAnnotation(StringConst.class);
-                            if (constID == RobotConst.YIN) {
-                                field.set(consts, annotation.yin());
-                            } else if (constID == RobotConst.YANG) {
-                                field.set(consts, annotation.yang());
-                            }
-                            // entry.setString((String) field.get(consts));
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (field.isAnnotationPresent(BooleanConst.class)) {
-                        try {
-                            BooleanConst annotation = field.getAnnotation(BooleanConst.class);
-                            if (constID == RobotConst.YIN) {
-                                field.set(consts, annotation.yin());
-                            } else if (constID == RobotConst.YANG) {
-                                field.set(consts, annotation.yang());
-                            }
-                            // entry.setBoolean((boolean) field.get(consts));
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    boolean tunnable = (ConstValues.DEBUG && clsIgnoreNT && fieldIgnoreNT);
-                    if ((field.getType().isPrimitive() || field.getType() == String.class) && tunnable) {
-                        NetworkTableEntry entry = ntSubTable.getEntry(field.getName());
-                        try {
-                            entry.setValue(field.get(consts));
-                        } catch (IllegalAccessException e) {
-                            DriverStation.reportError("Error setting value for " + cls.getName() + "." + field.getName(), false);
-                        }
-                        if (!field.isAnnotationPresent(TunnableIgnore.class)) {
-                            TunnableValuesAPI.addTunnableRunnable(() -> {
-                                try {
-                                    Class<?> type = field.getType();
-                                    if (type == int.class) {
-                                        field.setInt(consts, (int) entry.getInteger(0));
-                                    } else if (type == double.class) {
-                                        field.setDouble(consts, entry.getDouble(0));
-                                    } else if (type == String.class) {
-                                        field.set(consts, entry.getString(""));
-                                    } else if (type == boolean.class) {
-                                        field.setBoolean(consts, entry.getBoolean(false));
-                                    }
-                                } catch (IllegalAccessException e) {
-                                    DriverStation.reportError("Error setting value for " + cls.getName() + "." + field.getName(), false);
-                                }
-                            });
-                        } else {
-                            //makes the value "immutable" on nt by just repeatedly setting it
-                            TunnableValuesAPI.addTunnableRunnable(() -> {
-                                try {
-                                    entry.setValue(field.get(consts));
-                                } catch (IllegalAccessException e) {
-                                    DriverStation.reportError("Error setting value for " + cls.getName() + "." + field.getName(), false);
-                                }
-                            });
-                        }
-                    }
-                }
+                // entry.setInteger((Long) field.get(consts));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
             }
+        } else if (field.isAnnotationPresent(DoubleConst.class)) {
+            try {
+                DoubleConst annotation = field.getAnnotation(DoubleConst.class);
+                if (constID == RobotConst.YIN) {
+                    field.set(obj, annotation.yin());
+                } else if (constID == RobotConst.YANG) {
+                    field.set(obj, annotation.yang());
+                }
+                // entry.setDouble((double) field.get(consts));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        } else if (field.isAnnotationPresent(StringConst.class)) {
+            try {
+                StringConst annotation = field.getAnnotation(StringConst.class);
+                if (constID == RobotConst.YIN) {
+                    field.set(obj, annotation.yin());
+                } else if (constID == RobotConst.YANG) {
+                    field.set(obj, annotation.yang());
+                }
+                // entry.setString((String) field.get(consts));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        } else if (field.isAnnotationPresent(BooleanConst.class)) {
+            try {
+                BooleanConst annotation = field.getAnnotation(BooleanConst.class);
+                if (constID == RobotConst.YIN) {
+                    field.set(obj, annotation.yin());
+                } else if (constID == RobotConst.YANG) {
+                    field.set(obj, annotation.yang());
+                }
+                // entry.setBoolean((boolean) field.get(consts));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        if ((field.getType().isPrimitive() || field.getType() == String.class) && isTunnable && !fieldIgnoreNT) {
+            NetworkTableEntry entry = rootTable.get().getEntry(field.getName());
+            try {
+                entry.setValue(field.get(obj));
+            } catch (IllegalAccessException e) {
+                DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(), false);
+            }
+            if (!field.isAnnotationPresent(TunnableIgnore.class)) {
+                TunnableValuesAPI.addTunnableRunnable(() -> {
+                    try {
+                        Class<?> type = field.getType();
+                        if (type == int.class) {
+                            field.setInt(obj, (int) entry.getInteger(0));
+                        } else if (type == double.class) {
+                            field.setDouble(obj, entry.getDouble(0));
+                        } else if (type == String.class) {
+                            field.set(obj, entry.getString(""));
+                        } else if (type == boolean.class) {
+                            field.setBoolean(obj, entry.getBoolean(false));
+                        }
+                    } catch (IllegalAccessException e) {
+                        DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(), false);
+                    }
+                });
+            } else {
+                //makes the value "immutable" on nt by just repeatedly setting it
+                TunnableValuesAPI.addTunnableRunnable(() -> {
+                    try {
+                        entry.setValue(field.get(obj));
+                    } catch (IllegalAccessException e) {
+                        DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(), false);
+                    }
+                });
+            }
+        }
+    }
+
+    public static void handleConstSubclass(Class<?> cls, Optional<NetworkTable> rootTable, boolean tunnable) {
+        boolean clsIgnoreNT = cls.isAnnotationPresent(NTIgnore.class) || !rootTable.isPresent();
+        boolean isTunnable = (tunnable && !cls.isAnnotationPresent(TunnableIgnore.class));
+        for (Class<?> clazz : cls.getDeclaredClasses()) {
+            System.out.println("bleh");
+            if (clsIgnoreNT) {
+                handleConstSubclass(clazz, Optional.empty(), false);
+            } else {
+                handleConstSubclass(clazz, Optional.of(rootTable.get().getSubTable(cls.getSimpleName())), isTunnable);
+            }
+        }
+        for (Field field : cls.getDeclaredFields()) {
+            if (clsIgnoreNT) {
+                handleConstField(field, cls, Optional.empty(), false);
+            } else {
+                handleConstField(field, cls, Optional.of(rootTable.get().getSubTable(cls.getSimpleName())), isTunnable);
+            }
+        }
+    }
+
+    public static void applyRoboConst(Class<ConstValues> consts) {
+        Optional<NetworkTable> rootTable;
+        if (ConstValues.DEBUG) {
+            rootTable = Optional.of(NetworkTableInstance.getDefault().getTable("Constants"));
+        } else {
+            rootTable = Optional.empty();
+        }
+        for (Class<?> clazz : consts.getDeclaredClasses()) {
+            handleConstSubclass(clazz, rootTable, ConstValues.DEBUG);
         }
     }
 }

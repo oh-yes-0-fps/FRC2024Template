@@ -4,6 +4,7 @@ import com.igknighters.constants.ConstValues;
 import com.igknighters.subsystems.Resources.Subsystems;
 @SuppressWarnings("unused")
 
+/**If debug is false this controller does not initialize */
 public class TestingController extends ControllerParent {
     public TestingController(int port) {
         super(port, ConstValues.DEBUG);

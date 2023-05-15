@@ -8,18 +8,24 @@ public class ConstValues {
     public static final boolean DEBUG = true; // this should be false for competition
 
     // this is how you access the constants on a per subsystem basis
-    @ConstClass
     public static class kExample {
 
         public static int WIDTH = 26;
         @NTIgnore
         public static int LENGTH = 26;
 
+        public static int VALUE = 2;
+
         @TunnableIgnore
         @StringConst(yin = "yin", yang = "yang")
         public static String ROBOT_NAME;
 
         @BooleanConst(yin = true, yang = false)
-        public static boolean secondBoomMotor;
+        public static boolean SECOND_BOOM_MOTOR;
+
+        public static class kNested {
+            @IntConst(yin = 1, yang = 2)
+            public static int NESTED_CONST;
+        }
     }
 }

@@ -10,9 +10,9 @@ import com.igknighters.util.logging.AutoLog.SSL;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Example extends SubsystemBase implements McqSubsystemRequirements{
+public class Example extends SubsystemBase implements McqSubsystemRequirements {
 
-    @SSL.Shuffleboard(pos = {0,0}, size = {2,1})
+    @SSL.Shuffleboard(pos = { 0, 0 }, size = { 2, 1 })
     private String name = ConstValues.kExample.ROBOT_NAME;
 
     @SSL.Tunnable
@@ -23,13 +23,13 @@ public class Example extends SubsystemBase implements McqSubsystemRequirements{
         System.out.println("Hello " + name);
     }
 
-    @SSL.Shuffleboard(pos = {1,1}, size = {2,1})
+    @SSL.Shuffleboard(pos = { 1, 1 }, size = { 2, 1 })
     public Double getSquareRandomDouble() {
         return randomDouble * randomDouble;
     }
 
-    //subsystems go back to having no commands in them
-    //they will have a dedicated command file that stores all their inline commands
+    // subsystems go back to having no commands in them
+    // they will have a dedicated command file that stores all their inline commands
 
     @Override
     public void periodic() {

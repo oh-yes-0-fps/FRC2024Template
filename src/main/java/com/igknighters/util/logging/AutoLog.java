@@ -91,6 +91,7 @@ public class AutoLog {
             public boolean oneShot() default false;
         }
 
+        
         @Retention(RetentionPolicy.RUNTIME)
         @Target({ElementType.FIELD})
         public @interface Tunnable{}

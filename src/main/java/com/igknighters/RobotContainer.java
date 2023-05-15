@@ -1,6 +1,7 @@
 package com.igknighters;
 
 import com.igknighters.constants.ConstValues;
+import com.igknighters.constants.ConstantHelper;
 import com.igknighters.constants.RobotSetup;
 import com.igknighters.controllers.DriverController;
 import com.igknighters.controllers.OperatorController;
@@ -11,7 +12,9 @@ import com.igknighters.util.logging.LogInit;
 import edu.wpi.first.wpilibj.DriverStation;
 
 public class RobotContainer {
-
+    static {
+        ConstantHelper.applyRoboConst(ConstValues.class);
+    }
     private static final AllSubsystems allSubsystems = new AllSubsystems(RobotSetup.getRobotID().subsystems);
 
     private static final DriverController driverController = new DriverController(0);

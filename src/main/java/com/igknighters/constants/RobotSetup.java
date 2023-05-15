@@ -2,9 +2,6 @@ package com.igknighters.constants;
 
 import java.util.Map;
 
-import com.igknighters.constants.PanConstants.RobotConstants;
-import com.igknighters.constants.robots.RobotAConstants;
-import com.igknighters.constants.robots.RobotBConstants;
 import com.igknighters.subsystems.Resources.Subsystems;
 import com.igknighters.util.logging.BootupLogger;
 
@@ -13,34 +10,43 @@ import edu.wpi.first.wpilibj.RobotController;
 
 public class RobotSetup {
 
-    //to make these only be constructed once each instead of once per enum theyre stored in
-    private static final RobotConstants robotAConst = new RobotAConstants();
-    private static final RobotConstants robotBConst = new RobotBConstants();
+    // to make these only be constructed once each instead of once per enum theyre
+    // stored in
+    public enum RobotConst {
+        YIN(0), YANG(1);
+
+        public final int value;
+
+        RobotConst(int value) {
+            this.value = value;
+        }
+    }
 
     public enum RobotID {
         RobotA("RobotA",
-            Subsystems.list(Subsystems.Example), //can be constructed with enums
-            robotAConst),
+                Subsystems.list(Subsystems.Example), // can be constructed with enums
+                RobotConst.YIN),
 
         RobotB("RobotB",
-            Subsystems.list("Example"), //can be constructed with strings(pascal case)
-            robotBConst),
+                Subsystems.list("Example"), // can be constructed with strings(pascal case)
+                RobotConst.YANG),
 
-        TestBoard("testBoard", Subsystems.none(), robotAConst),
+        TestBoard("testBoard", Subsystems.none(), RobotConst.YIN),
 
-        Simulation("simulation", Subsystems.all(), robotAConst),
+        Simulation("simulation", Subsystems.all(), RobotConst.YIN),
 
-        // this will never be used as if this is hit an error will already have been thrown
-        Unlabeled("", Subsystems.none(), robotBConst);
+        // this will never be used as if this is hit an error will already have been
+        // thrown
+        Unlabeled("", Subsystems.none(), RobotConst.YANG);
 
         public final String name;
         public final Subsystems[] subsystems;
-        public final RobotConstants constants;
+        public final RobotConst constID;
 
-        RobotID(String name, Subsystems[] subsystems, RobotConstants constants) {
+        RobotID(String name, Subsystems[] subsystems, RobotConst constants) {
             this.name = name;
             this.subsystems = subsystems;
-            this.constants = constants;
+            this.constID = constants;
         }
     }
 
@@ -49,8 +55,7 @@ public class RobotSetup {
             "0306adf3", RobotID.TestBoard,
             "ffffffff", RobotID.Simulation,
             "aaaaaaaa", RobotID.RobotA,
-            "bbbbbbbb", RobotID.RobotB
-        );
+            "bbbbbbbb", RobotID.RobotB);
 
     private static RobotID currentID = RobotID.Unlabeled;
 

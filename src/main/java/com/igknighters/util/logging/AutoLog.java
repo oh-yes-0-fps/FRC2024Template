@@ -73,7 +73,9 @@ public class AutoLog {
         @Retention(RetentionPolicy.RUNTIME)
         @Target({ElementType.FIELD, ElementType.METHOD})
         public @interface Shuffleboard{
+            /**{Column, Row} |*/
             public int[] pos() default {0, 0};
+            /**{Width, Height} |*/
             public int[] size() default {1, 1};
             public String widget() default "";
         }

@@ -30,6 +30,7 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         BootupLogger.BootupLog("Robot Init");
         RobotContainer.robotStartup();
+        BootupLogger.BootupLog("Done");
     }
 
     /**

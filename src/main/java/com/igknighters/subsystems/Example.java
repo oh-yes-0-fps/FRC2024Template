@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Example extends SubsystemBase implements McqSubsystemRequirements {
 
-    @SSL.Shuffleboard(pos = { 0, 0 }, size = { 2, 1 })
+    @SSL.Shuffleboard(pos = { 3, 0 }, size = { 2, 1 })
     private String name = ConstValues.kExample.ROBOT_NAME;
 
     @SSL.Tunnable
@@ -23,7 +23,7 @@ public class Example extends SubsystemBase implements McqSubsystemRequirements {
         System.out.println("Hello " + name);
     }
 
-    @SSL.Shuffleboard(pos = { 1, 1 }, size = { 2, 1 })
+    @SSL.Shuffleboard(pos = { 3, 1 }, size = { 2, 1 })
     public Double getExpoRandomDouble() {
         return Math.pow(randomDouble, ConstValues.kExample.VALUE);
     }

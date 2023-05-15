@@ -27,6 +27,40 @@ public class TunnableValuesAPI {
         return tunnableNetworkTable.getSubTable(subsystemName).getEntry(name);
     }
 
+    public class TunnableDouble {
+        private final NetworkTableEntry entry;
+
+        public TunnableDouble(String path, Double defaultValue) {
+            this.entry = tunnableNetworkTable.getEntry(path);
+            entry.setDouble(defaultValue);
+        }
+
+        public Double get() {
+            return entry.getDouble(0);
+        }
+
+        public void set(double value) {
+            entry.setDouble(value);
+        }
+    }
+
+    public class TunnableBoolean {
+        private final NetworkTableEntry entry;
+
+        public TunnableBoolean(String path, Boolean defaultValue) {
+            this.entry = tunnableNetworkTable.getEntry(path);
+            entry.setBoolean(defaultValue);
+        }
+
+        public Boolean get() {
+            return entry.getBoolean(false);
+        }
+
+        public void set(boolean value) {
+            entry.setBoolean(value);
+        }
+    }
+
     private static int lastRan = 0;
     static {
         if (ConstValues.DEBUG) {

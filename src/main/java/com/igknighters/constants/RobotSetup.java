@@ -35,8 +35,7 @@ public class RobotSetup {
 
         Simulation("simulation", Subsystems.all(), RobotConstID.YIN),
 
-        // this will never be used as if this is hit an error will already have been
-        // thrown
+        // this will never be used as if this is hit an error will already have been thrown
         Unlabeled("", Subsystems.none(), RobotConstID.YANG);
 
         public final String name;

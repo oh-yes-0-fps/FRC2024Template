@@ -6,6 +6,7 @@ import java.nio.file.Path;
 
 import com.igknighters.constants.ConstValues;
 import com.igknighters.constants.RobotSetup;
+import com.igknighters.constants.RobotSetup.RobotID;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.datalog.DataLog;
@@ -19,7 +20,6 @@ public class LogInit {
     public static void initNetworkTables() {
         NetworkTableInstance instance = NetworkTableInstance.getDefault();
         instance.getEntry("/serialNum").setString(RobotController.getSerialNumber());
-        instance.getEntry("/robotName").setString(RobotSetup.getRobotID().name);
 
         //shouldnt be needed because above should be enough
         // DataLogger.oneShotString("/RealMetadata/SerialNum", RobotController.getSerialNumber());
@@ -46,6 +46,16 @@ public class LogInit {
         } catch (IOException e) {
             System.err.println("Could not read git information files.");
         }
+
+        RobotID id = RobotSetup.getRobotID();
+        var idTable = instance.getTable("/RobotID");
+        idTable.getEntry("name").setString(id.name);
+        idTable.getEntry("constId").setString(id.constID + "");
+        String[] subsystemNames = new String[id.subsystems.length];
+        for (int i = 0; i < subsystemNames.length; i++) {
+            subsystemNames[i] = id.subsystems[i].name;
+        }
+        idTable.getEntry("subsystems").setStringArray(subsystemNames);
     }
 
     public static void initDataLogger() {

@@ -22,7 +22,7 @@ public class Resources {
         //add new subsystems here with names in Pascal Case
         Example("Example");
 
-        private final String name;
+        public final String name;
 
         Subsystems(String name) {
             this.name = name;

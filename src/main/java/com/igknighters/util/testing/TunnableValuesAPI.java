@@ -1,4 +1,4 @@
-package com.igknighters.util.logging;
+package com.igknighters.util.testing;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;

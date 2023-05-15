@@ -341,3 +341,4 @@ src/main/deploy/hostname.txt
 
 logs/
 !devconfigs/*
+*.wpilog

@@ -13,6 +13,7 @@ import com.igknighters.util.hardware.OptionalHardwareUtil.HardwareSuccessRespons
 import com.igknighters.util.hardware.OptionalHardwareUtil.HardwareValueResponse;
 import com.igknighters.util.hardware.OptionalHardwareUtil.PositionUnit;
 import com.igknighters.util.hardware.OptionalHardwareUtil.VelocityUnit;
+import com.igknighters.util.logging.BootupLogger;
 
 public class McqCanCoder {
     private int deviceNumber;
@@ -31,6 +32,9 @@ public class McqCanCoder {
             veloStatusValue = canCoder.getVelocity();
             posStatusValue = canCoder.getPosition();
             absPosStatusValue = canCoder.getAbsolutePosition();
+            BootupLogger.BootupLog("CANCoder " + deviceNumber + " initialized");
+        } else {
+            BootupLogger.BootupLog("CANCoder " + deviceNumber + " not initialized");
         }
     }
 

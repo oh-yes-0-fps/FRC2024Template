@@ -6,14 +6,26 @@ package com.igknighters.subsystems;
 
 import com.igknighters.constants.ConstValues;
 import com.igknighters.subsystems.Resources.McqSubsystemRequirements;
+import com.igknighters.util.logging.AutoLog.SSL;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Example extends SubsystemBase implements McqSubsystemRequirements{
+
+    @SSL.Shuffleboard(pos = {0,0}, size = {2,1})
+    private String name = ConstValues.kExample.ROBOT_NAME;
+
+    @SSL.Tunnable
+    private double randomDouble = 0.0;
+
     /** Creates a new Example. */
     public Example() {
-        String name = ConstValues.kExample.ROBOT_NAME;
         System.out.println("Hello " + name);
+    }
+
+    @SSL.Shuffleboard(pos = {1,1}, size = {2,1})
+    public Double getSquareRandomDouble() {
+        return randomDouble * randomDouble;
     }
 
     //subsystems go back to having no commands in them
@@ -26,9 +38,5 @@ public class Example extends SubsystemBase implements McqSubsystemRequirements{
 
     @Override
     public void setDefaultCommand() {
-    }
-
-    @Override
-    public void setupShuffleBoard() {
     }
 }

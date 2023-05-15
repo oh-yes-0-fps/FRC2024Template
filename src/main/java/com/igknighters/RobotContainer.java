@@ -19,11 +19,11 @@ public class RobotContainer {
     private static final TestingController testingController = new TestingController(3);
 
     public static void robotStartup() {
+        DriverStation.silenceJoystickConnectionWarning(ConstValues.DEBUG);
         driverController.assignButtons(allSubsystems);
         operatorController.assignButtons(allSubsystems);
         testingController.assignButtons(allSubsystems);
         LogInit.init();
-        DriverStation.silenceJoystickConnectionWarning(ConstValues.DEBUG);
     }
 
     /// INITIALIZATION

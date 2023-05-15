@@ -2,6 +2,9 @@ package com.igknighters.subsystems;
 
 import java.util.function.Consumer;
 
+import com.igknighters.util.logging.AutoLog;
+import com.igknighters.util.logging.BootupLogger;
+
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
 public class Resources {
@@ -116,12 +119,18 @@ public class Resources {
                 switch (subsystem) {
                     //add new cases for new subsystems
                     case Example:
-                        example = OptionalSubsystem.contains(new Example());
+                        example = createSubsystem(new Example());
                         break;
                     default:
                         break;
                 }
+                BootupLogger.BootupLog("Subsystem " + subsystem.name + " initialized");
             }
+        }
+
+        private <T extends Subsystem & McqSubsystemRequirements> OptionalSubsystem<T> createSubsystem(T subsystem) {
+            AutoLog.setupSubsystemLogging(subsystem);
+            return OptionalSubsystem.contains(subsystem);
         }
 
         public Subsystems[] getEnabledSubsystemEnums() {
@@ -148,11 +157,7 @@ public class Resources {
         public void setDefaultCommand();
     }
 
-    public interface ShuffleboardCompatible {
-        public void setupShuffleBoard();
-    }
-
     //this is the interface that all subsystems must implement
-    public interface McqSubsystemRequirements extends TestableSubsystem, SetableDefaultCommand, ShuffleboardCompatible {
+    public interface McqSubsystemRequirements extends TestableSubsystem, SetableDefaultCommand {
     }
 }

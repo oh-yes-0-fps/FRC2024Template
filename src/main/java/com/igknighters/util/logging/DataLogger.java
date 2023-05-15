@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import com.igknighters.util.utilPeriodic;
+
 public class DataLogger {
     private static final Map<DataLogEntry, Supplier<?>> dataLogMap = new HashMap<>();
     private static final DataLog log = DataLogManager.getLog();
@@ -99,6 +101,10 @@ public class DataLogger {
         dataLogMap.put(new StringLogEntry(log, entryName), valueSupplier);
     }
 
+    public static void addCustom(DataLogEntry entry, Supplier<?> valueSupplier) {
+        dataLogMap.put(entry, valueSupplier);
+    }
+
     public static void update() {
         for (Map.Entry<DataLogEntry, Supplier<?>> entry : dataLogMap.entrySet()) {
             var key = entry.getKey();
@@ -137,5 +143,8 @@ public class DataLogger {
                 ((StringLogEntry) key).append((String) val);
             }
         }
+    }
+    static {
+        utilPeriodic.addPeriodicRunnable("DataLogger", DataLogger::update);
     }
 }

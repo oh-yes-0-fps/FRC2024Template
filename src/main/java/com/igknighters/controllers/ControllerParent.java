@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import com.igknighters.subsystems.Resources.AllSubsystems;
 import com.igknighters.subsystems.Resources.Subsystems;
+import com.igknighters.util.logging.BootupLogger;
 
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -110,6 +111,9 @@ public class ControllerParent {
         this.madeController = makeController;
         if (madeController) {
             controller = new CommandXboxController(port);
+            BootupLogger.BootupLog("Controller " + port + " initialized");
+        } else {
+            BootupLogger.BootupLog("Controller " + port + " not initialized");
         }
         A = new TriggerBindingTuple(controller.a(), SingleDepBinding.empty());
         B = new TriggerBindingTuple(controller.b(), SingleDepBinding.empty());

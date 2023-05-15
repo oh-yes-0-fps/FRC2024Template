@@ -22,6 +22,7 @@ import com.igknighters.util.hardware.OptionalHardwareUtil.HardwareSuccessRespons
 import com.igknighters.util.hardware.OptionalHardwareUtil.HardwareValueResponse;
 import com.igknighters.util.hardware.OptionalHardwareUtil.PositionUnit;
 import com.igknighters.util.hardware.OptionalHardwareUtil.VelocityUnit;
+import com.igknighters.util.logging.BootupLogger;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -44,6 +45,9 @@ public class McqTalonFX {
             motor = new TalonFX(deviceNumber);
             veloStatusValue = motor.getVelocity();
             posStatusValue = motor.getRotorPosition();
+            BootupLogger.BootupLog("TalonFX " + deviceNumber + " initialized");
+        } else {
+            BootupLogger.BootupLog("TalonFX " + deviceNumber + " not initialized");
         }
     }
 

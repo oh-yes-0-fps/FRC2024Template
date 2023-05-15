@@ -6,6 +6,7 @@ import com.igknighters.constants.PanConstants.RobotConstants;
 import com.igknighters.constants.robots.RobotAConstants;
 import com.igknighters.constants.robots.RobotBConstants;
 import com.igknighters.subsystems.Resources.Subsystems;
+import com.igknighters.util.logging.BootupLogger;
 
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
@@ -66,6 +67,7 @@ public class RobotSetup {
             } else {
                 throw new RuntimeException("Robot ID not found");
             }
+            BootupLogger.BootupLog("Robot Name: " + currentID.name);
         }
         return currentID;
     }

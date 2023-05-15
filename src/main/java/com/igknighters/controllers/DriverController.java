@@ -14,9 +14,9 @@ public class DriverController extends ControllerParent {
                 Subsystems.Example,
                 (trigger, allSS) -> trigger.onTrue(ExampleCommands.cmdDoThing(allSS.example.getSubsystem())));
 
-        this.B.binding = new MultiDepBinding(
-                Subsystems.list("Example", "Example2"), // example 2 doesnt exist so would never assign
-                (trigger, allSS) -> trigger.onTrue(ExampleCommands.cmdDoThing(allSS.example.getSubsystem())));
+        // this.B.binding = new MultiDepBinding(
+        //         Subsystems.list("Example", "Example2"), // example 2 doesnt exist so would never assign
+        //         (trigger, allSS) -> trigger.onTrue(ExampleCommands.cmdDoThing(allSS.example.getSubsystem())));
 
         // this.X.binding =
 

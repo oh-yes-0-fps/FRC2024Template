@@ -9,7 +9,7 @@ import java.util.Optional;
 
 import com.igknighters.constants.RobotSetup.RobotConstID;
 import com.igknighters.util.logging.BootupLogger;
-import com.igknighters.util.testing.TunnableValuesAPI;
+import com.igknighters.util.testing.TunableValuesAPI;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -56,7 +56,7 @@ public class ConstantHelper {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.TYPE, ElementType.FIELD })
-    public @interface TunnableIgnore {
+    public @interface TunableIgnore {
     }
 
     /** Doesn't put the value on network tables at all */
@@ -65,9 +65,9 @@ public class ConstantHelper {
     public @interface NTIgnore {
     }
 
-    public static void handleConstField(Field field, Class<?> obj, Optional<NetworkTable> rootTable, boolean tunnable) {
+    public static void handleConstField(Field field, Class<?> obj, Optional<NetworkTable> rootTable, boolean tunable) {
         boolean fieldIgnoreNT = field.isAnnotationPresent(NTIgnore.class) || !rootTable.isPresent();
-        boolean isTunnable = (tunnable && !field.isAnnotationPresent(TunnableIgnore.class));
+        boolean isTunable = (tunable && !field.isAnnotationPresent(TunableIgnore.class));
         field.setAccessible(true);
         RobotConstID constID = RobotSetup.getRobotID().constID;
         if (field.isAnnotationPresent(IntConst.class)) {
@@ -126,8 +126,8 @@ public class ConstantHelper {
             } catch (IllegalAccessException e) {
                 DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(), false);
             }
-            if (isTunnable) {
-                TunnableValuesAPI.addTunnableRunnable(() -> {
+            if (isTunable) {
+                TunableValuesAPI.addTunableRunnable(() -> {
                     try {
                         Class<?> type = field.getType();
                         if (type == int.class) {
@@ -146,7 +146,7 @@ public class ConstantHelper {
                 });
             } else {
                 // makes the value "immutable" on nt by just repeatedly setting it
-                TunnableValuesAPI.addTunnableRunnable(() -> {
+                TunableValuesAPI.addTunableRunnable(() -> {
                     try {
                         entry.setValue(field.get(obj));
                     } catch (IllegalAccessException e) {
@@ -158,21 +158,21 @@ public class ConstantHelper {
         }
     }
 
-    public static void handleConstSubclass(Class<?> cls, Optional<NetworkTable> rootTable, boolean tunnable) {
+    public static void handleConstSubclass(Class<?> cls, Optional<NetworkTable> rootTable, boolean tunable) {
         boolean clsIgnoreNT = cls.isAnnotationPresent(NTIgnore.class) || !rootTable.isPresent();
-        boolean isTunnable = (tunnable && !cls.isAnnotationPresent(TunnableIgnore.class));
+        boolean isTunable = (tunable && !cls.isAnnotationPresent(TunableIgnore.class));
         for (Class<?> clazz : cls.getDeclaredClasses()) {
             if (clsIgnoreNT) {
                 handleConstSubclass(clazz, Optional.empty(), false);
             } else {
-                handleConstSubclass(clazz, Optional.of(rootTable.get().getSubTable(cls.getSimpleName())), isTunnable);
+                handleConstSubclass(clazz, Optional.of(rootTable.get().getSubTable(cls.getSimpleName())), isTunable);
             }
         }
         for (Field field : cls.getDeclaredFields()) {
             if (clsIgnoreNT) {
                 handleConstField(field, cls, Optional.empty(), false);
             } else {
-                handleConstField(field, cls, Optional.of(rootTable.get().getSubTable(cls.getSimpleName())), isTunnable);
+                handleConstField(field, cls, Optional.of(rootTable.get().getSubTable(cls.getSimpleName())), isTunable);
             }
         }
     }

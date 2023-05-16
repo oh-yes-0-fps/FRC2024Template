@@ -12,9 +12,7 @@ import com.igknighters.util.logging.LogInit;
 import edu.wpi.first.wpilibj.DriverStation;
 
 public class RobotContainer {
-    static {
-        ConstantHelper.applyRoboConst(ConstValues.class);
-    }
+    static { ConstantHelper.applyRoboConst(ConstValues.class); }
     private static final AllSubsystems allSubsystems = new AllSubsystems(RobotSetup.getRobotID().subsystems);
 
     private static final DriverController driverController = new DriverController(0);

@@ -15,7 +15,7 @@ public class Example extends SubsystemBase implements McqSubsystemRequirements {
     @SSL.DataLog
     private String name = ConstValues.kExample.ROBOT_NAME;
 
-    @SSL.Tunnable
+    @SSL.Tunable
     private double randomDouble = 0.0;
 
     /** Creates a new Example. */

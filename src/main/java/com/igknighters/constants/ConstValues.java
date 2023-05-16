@@ -17,7 +17,7 @@ public class ConstValues {
 
         public static int VALUE = 2;
 
-        @TunnableIgnore
+        @TunableIgnore
         @StringConst(yin = "yin", yang = "yang")
         public static String ROBOT_NAME;
 

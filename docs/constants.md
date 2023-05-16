@@ -51,13 +51,13 @@ public class ConstValues {
 
 ## Constants and NetworkTables
 while debug is true all of constants is sent to NT <br>
-by default values are mutable, but you can make them immutable by adding the annotation @TunnableIgnore
+by default values are mutable, but you can make them immutable by adding the annotation @TunableIgnore
 you can also not send a value to NT with @NTIgnore
 ```java
 public class ConstValues {
     @NTIgnore
     public static boolean VALUE = true;
-    @TunnableIgnore
+    @TunableIgnore
     @StringConst(yin = "yin", yang = "yang")
     public static String NAME;
 }

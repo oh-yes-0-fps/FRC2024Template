@@ -119,14 +119,14 @@ public class ConstantHelper {
                 e.printStackTrace();
             }
         }
-        if ((field.getType().isPrimitive() || field.getType() == String.class) && isTunnable && !fieldIgnoreNT) {
+        if ((field.getType().isPrimitive() || field.getType() == String.class) && !fieldIgnoreNT) {
             NetworkTableEntry entry = rootTable.get().getEntry(field.getName());
             try {
                 entry.setValue(field.get(obj));
             } catch (IllegalAccessException e) {
                 DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(), false);
             }
-            if (!field.isAnnotationPresent(TunnableIgnore.class)) {
+            if (isTunnable) {
                 TunnableValuesAPI.addTunnableRunnable(() -> {
                     try {
                         Class<?> type = field.getType();

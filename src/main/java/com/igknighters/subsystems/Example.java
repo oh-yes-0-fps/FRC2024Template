@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Example extends SubsystemBase implements McqSubsystemRequirements {
 
-    @SSL.Shuffleboard(pos = { 3, 0 }, size = { 2, 1 })
+    @SSL.DataLog
     private String name = ConstValues.kExample.ROBOT_NAME;
 
     @SSL.Tunnable

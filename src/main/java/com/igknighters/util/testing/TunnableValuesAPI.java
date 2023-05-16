@@ -19,19 +19,49 @@ public class TunnableValuesAPI {
         tunnableRunnables.add(runnable);
     }
 
+    public enum TunnableValePlacement {
+        Shuffleboard, SmartDashboard, TunnableValues;
+    }
+
     public static NetworkTableEntry getTunnableNTEntry(String name) {
         return tunnableNetworkTable.getEntry(name);
+    }
+
+    public static NetworkTableEntry getTunnableNTEntry(String name, TunnableValePlacement placement) {
+        switch (placement) {
+            case Shuffleboard:
+                return NetworkTableInstance.getDefault().getTable("Shuffleboard").getEntry(name);
+            case SmartDashboard:
+                return NetworkTableInstance.getDefault().getTable("SmartDashboard").getEntry(name);
+            case TunnableValues:
+                return tunnableNetworkTable.getEntry(name);
+            default:
+                return null;
+        }
     }
 
     public static NetworkTableEntry getTunnableNTEntry(String subsystemName, String name) {
         return tunnableNetworkTable.getSubTable(subsystemName).getEntry(name);
     }
 
+    public static NetworkTableEntry getTunnableNTEntry(String subsystemName, String name, TunnableValePlacement placement) {
+        switch (placement) {
+            case Shuffleboard:
+                return NetworkTableInstance.getDefault().getTable("Shuffleboard").getSubTable(subsystemName).getEntry(name);
+            case SmartDashboard:
+                return NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable(subsystemName).getEntry(name);
+            case TunnableValues:
+                return tunnableNetworkTable.getSubTable(subsystemName).getEntry(name);
+            default:
+                return null;
+        }
+    }
+
     public class TunnableDouble {
         private final NetworkTableEntry entry;
 
-        public TunnableDouble(String path, Double defaultValue) {
-            this.entry = tunnableNetworkTable.getEntry(path);
+        public TunnableDouble(String subsystemName, String name, Double defaultValue) {
+            this.entry = getTunnableNTEntry(subsystemName, name);
             entry.setDouble(defaultValue);
         }
 
@@ -47,7 +77,7 @@ public class TunnableValuesAPI {
     public class TunnableBoolean {
         private final NetworkTableEntry entry;
 
-        public TunnableBoolean(String path, Boolean defaultValue) {
+        public TunnableBoolean(String path, Boolean defaultValue, TunnableValePlacement placement) {
             this.entry = tunnableNetworkTable.getEntry(path);
             entry.setBoolean(defaultValue);
         }
@@ -65,11 +95,10 @@ public class TunnableValuesAPI {
     static {
         if (ConstValues.DEBUG) {
             utilPeriodic.addPeriodicRunnable("Tunnable Updating", () -> {
-                if (tunnableRunnables.size() < 60) {
+                if (tunnableRunnables.size() < 20) {
                     tunnableRunnables.forEach(Runnable::run);
                 } else {
-                    //makes it only run ~20% of the runnables each cycle, increases latency but decreases cpu usage
-                    int segmentSize = tunnableRunnables.size() / 5 + 2;
+                    int segmentSize = tunnableRunnables.size() / 5 + 1;
                     for (int i = lastRan; i < lastRan + segmentSize; i++) {
                         if (i >= tunnableRunnables.size()) {
                             lastRan = 0;

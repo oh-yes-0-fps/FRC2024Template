@@ -8,19 +8,19 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.igknighters.constants.ConstValues;
 import com.igknighters.util.utilPeriodic;
 import com.igknighters.util.testing.TunnableValuesAPI;
+import com.igknighters.util.logging.McqShuffleboardApi.MetadataFields;
 import com.igknighters.util.utilPeriodic.Frequency;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.shuffleboard.SuppliedValueWidget;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -166,163 +166,25 @@ public class AutoLog {
     }
 
     private static Supplier<?> getSupplier(Field field, Subsystem subsystem) {
-        DataType type = DataType.fromClass(field.getType());
-        switch (type) {
-            case Double:
-                return () -> {
-                    try {
-                        return field.getDouble(subsystem);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
-                        return 0.0;
-                    }
-                };
-            case Boolean:
-                return () -> {
-                    try {
-                        return field.getBoolean(subsystem);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
-                        return false;
-                    }
-                };
-            case String:
-                return () -> {
-                    try {
-                        return field.get(subsystem);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
-                        return "";
-                    }
-                };
-            case Integer:
-                return () -> {
-                    try {
-                        return field.getInt(subsystem);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
-                        return 0;
-                    }
-                };
-            case DoubleArray:
-                return () -> {
-                    try {
-                        return field.get(subsystem);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
-                        return new Double[0];
-                    }
-                };
-            case BooleanArray:
-                return () -> {
-                    try {
-                        return field.get(subsystem);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
-                        return new Boolean[0];
-                    }
-                };
-            case StringArray:
-                return () -> {
-                    try {
-                        return field.get(subsystem);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
-                        return new String[0];
-                    }
-                };
-            case IntegerArray:
-                return () -> {
-                    try {
-                        return field.get(subsystem);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
-                        return new Integer[0];
-                    }
-                };
-            default:
-                return null;
-        }
+        return () -> {
+            try {
+                return field.get(subsystem);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
+                return "";
+            }
+        };
     }
 
     private static Supplier<?> getSupplier(Method method, Subsystem subsystem) {
-        DataType type = DataType.fromClass(method.getReturnType());
-        switch (type) {
-            case Double:
-                return () -> {
-                    try {
-                        return method.invoke(subsystem);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
-                        return 0.0;
-                    }
-                };
-            case Boolean:
-                return () -> {
-                    try {
-                        return method.invoke(subsystem);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
-                        return false;
-                    }
-                };
-            case String:
-                return () -> {
-                    try {
-                        return method.invoke(subsystem);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
-                        return "";
-                    }
-                };
-            case Integer:
-                return () -> {
-                    try {
-                        return method.invoke(subsystem);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
-                        return 0;
-                    }
-                };
-            case DoubleArray:
-                return () -> {
-                    try {
-                        return method.invoke(subsystem);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
-                        return new Double[0];
-                    }
-                };
-            case BooleanArray:
-                return () -> {
-                    try {
-                        return method.invoke(subsystem);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
-                        return new Boolean[0];
-                    }
-                };
-            case StringArray:
-                return () -> {
-                    try {
-                        return method.invoke(subsystem);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
-                        return new String[0];
-                    }
-                };
-            case IntegerArray:
-                return () -> {
-                    try {
-                        return method.invoke(subsystem);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
-                        return new Integer[0];
-                    }
-                };
-            default:
-                return null;
-        }
+        return () -> {
+            try {
+                return method.invoke(subsystem);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
+                return false;
+            }
+        };
     }
 
 
@@ -557,107 +419,24 @@ public class AutoLog {
     }
 
     private static void shuffleboardWidgetHelper(Supplier<?> supplier, DataType type, String f_name, String ss_name, SSL.Shuffleboard annotation) {
-        ShuffleboardTab tab = Shuffleboard.getTab(ss_name);
-        SuppliedValueWidget<?> widget;
-        switch (type) {
-            case Double:
-                widget = tab.addDouble(f_name, () -> {
-                    try {
-                        return (Double) supplier.get();
-                    } catch (IllegalArgumentException e) {
-                        DriverStation.reportWarning(ss_name + "/" + f_name + " supllier is erroring", false);
-                        return 0.0;
-                    }
-                });
-                break;
-            case Boolean:
-                widget = tab.addBoolean(f_name, () -> {
-                    try {
-                        return (Boolean) supplier.get();
-                    } catch (IllegalArgumentException e) {
-                        DriverStation.reportWarning(ss_name + "/" + f_name + " supllier is erroring", false);
-                        return false;
-                    }
-                });
-                break;
-            case String:
-                widget = tab.addString(f_name, () -> {
-                    try {
-                        return (String) supplier.get();
-                    } catch (IllegalArgumentException e) {
-                        DriverStation.reportWarning(ss_name + "/" + f_name + " supllier is erroring", false);
-                        return "";
-                    }
-                });
-                break;
-            case Integer:
-                widget = tab.addNumber(f_name, () -> {
-                    try {
-                        return (Integer) supplier.get();
-                    } catch (IllegalArgumentException e) {
-                        DriverStation.reportWarning(ss_name + "/" + f_name + " supllier is erroring", false);
-                        return 0;
-                    }
-                });
-                break;
-            case DoubleArray:
-                widget = tab.addDoubleArray(f_name, () -> {
-                    try {
-                        return (double[]) supplier.get();
-                    } catch (IllegalArgumentException e) {
-                        DriverStation.reportWarning(ss_name + "/" + f_name + " supllier is erroring", false);
-                        return new double[] {0.0};
-                    }
-                });
-                break;
-            case BooleanArray:
-                widget = tab.addBooleanArray(f_name, () -> {
-                    try {
-                        return (boolean[]) supplier.get();
-                    } catch (IllegalArgumentException e) {
-                        DriverStation.reportWarning(ss_name + "/" + f_name + " supllier is erroring", false);
-                        return new boolean[] {false};
-                    }
-                });
-                break;
-            case StringArray:
-                widget = tab.addStringArray(f_name, () -> {
-                    try {
-                        return (String[]) supplier.get();
-                    } catch (IllegalArgumentException e) {
-                        DriverStation.reportWarning(ss_name + "/" + f_name + " supllier is erroring", false);
-                        return new String[] {""};
-                    }
-                });
-                break;
-            case IntegerArray:
-                widget = tab.addIntegerArray(f_name, () -> {
-                    try {
-                        return (long[]) supplier.get();
-                    } catch (IllegalArgumentException e) {
-                        DriverStation.reportWarning(ss_name + "/" + f_name + " supllier is erroring", false);
-                        return new long[] {0};
-                    }
-                });
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid data type");
+        McqShuffleboardApi.ShuffleEntry entry = McqShuffleboardApi.getTab(ss_name).addEntry(f_name, supplier);
+        Map<MetadataFields, Object> metadata = new HashMap<>();
+        if (annotation.pos() != new int[] {0, 0}) {
+            metadata.put(MetadataFields.Position, new double[] {annotation.pos()[0], annotation.pos()[1]});
         }
-        if (annotation.pos() != new int[] {0,0}) {
-            widget = widget.withPosition(annotation.pos()[0], annotation.pos()[1]);
+        if (annotation.size() != new int[] {1, 1}) {
+            metadata.put(MetadataFields.Size, new double[] {annotation.size()[0], annotation.size()[1]});
         }
-        if (annotation.size() != new int[] {1,1}) {
-            widget = widget.withSize(annotation.size()[0], annotation.size()[1]);
+        if (annotation.widget().length() > 0) {
+            metadata.put(MetadataFields.Widget, annotation.widget());
         }
-        if (annotation.widget() != "") {
-            widget = widget.withWidget(annotation.widget());
-        }
+        entry.applyMetadata(metadata);
     }
 
     public static void setupSubsystemLogging(SubsystemBase subsystem) {
         String ss_name = subsystem.getClass().getSimpleName();
         if (ConstValues.DEBUG){
-            Shuffleboard.getTab(ss_name).add(subsystem);
+            McqShuffleboardApi.getTab(ss_name).addSendable(subsystem);
         } else {
             String pathPrefix;
             if (datalogKeepsShuffleboardPath) {

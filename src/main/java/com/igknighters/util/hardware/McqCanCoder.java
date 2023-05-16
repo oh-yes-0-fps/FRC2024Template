@@ -15,7 +15,10 @@ import com.igknighters.util.hardware.OptionalHardwareUtil.PositionUnit;
 import com.igknighters.util.hardware.OptionalHardwareUtil.VelocityUnit;
 import com.igknighters.util.logging.BootupLogger;
 
-public class McqCanCoder {
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
+
+public class McqCanCoder implements Sendable {
     private int deviceNumber;
     private boolean hasCoder = false;
     private CANcoder canCoder;
@@ -212,5 +215,16 @@ public class McqCanCoder {
         }
         return HardwareSuccessResponse.empty();
 
+    }
+
+    @Override
+    public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("McqCanCoder");
+        builder.addBooleanProperty(".enabled", () -> this.enabled(), null);
+        if (this.enabled()) {
+            builder.addDoubleProperty("Velocity(RPS)", this.veloStatusValue.asSupplier()::get, null);
+            builder.addDoubleProperty("Position(R)", this.posStatusValue.asSupplier()::get, null);
+            builder.addDoubleProperty("Absolute Position(R)", this.absPosStatusValue.asSupplier()::get, null);
+        }
     }
 }

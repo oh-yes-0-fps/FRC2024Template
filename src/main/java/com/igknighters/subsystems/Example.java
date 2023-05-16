@@ -6,16 +6,16 @@ package com.igknighters.subsystems;
 
 import com.igknighters.constants.ConstValues;
 import com.igknighters.subsystems.Resources.McqSubsystemRequirements;
-import com.igknighters.util.logging.AutoLog.SSL;
+import com.igknighters.util.logging.AutoLog.AL;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Example extends SubsystemBase implements McqSubsystemRequirements {
 
-    @SSL.DataLog
+    @AL.DataLog
     private String name = ConstValues.kExample.ROBOT_NAME;
 
-    @SSL.Tunable
+    @AL.Tunable
     private double randomDouble = 0.0;
 
     /** Creates a new Example. */
@@ -23,7 +23,7 @@ public class Example extends SubsystemBase implements McqSubsystemRequirements {
         System.out.println("Hello " + name);
     }
 
-    @SSL.Shuffleboard(pos = { 3, 1 }, size = { 2, 1 })
+    @AL.Shuffleboard(pos = { 3, 1 }, size = { 2, 1 })
     public Double getExpoRandomDouble() {
         return Math.pow(randomDouble, ConstValues.kExample.VALUE);
     }

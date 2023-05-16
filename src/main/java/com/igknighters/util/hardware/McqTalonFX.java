@@ -24,11 +24,13 @@ import com.igknighters.util.hardware.OptionalHardwareUtil.PositionUnit;
 import com.igknighters.util.hardware.OptionalHardwareUtil.VelocityUnit;
 import com.igknighters.util.logging.BootupLogger;
 
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
-public class McqTalonFX {
+public class McqTalonFX implements Sendable{
     private int deviceNumber;
     private boolean hasMotor = false;
     private TalonFX motor;
@@ -430,6 +432,17 @@ public class McqTalonFX {
                     this.motor.setControl(new Follower(otherMotor.getDeviceID(), invertMaster)));
         }
         return HardwareSuccessResponse.empty();
+    }
+
+    @Override
+    public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("McqCanCoder");
+        builder.addBooleanProperty("Enabled", () -> this.enabled(), null);
+        if (this.enabled()) {
+            builder.addDoubleProperty("Velocity(RPS)", this.veloStatusValue.asSupplier()::get, null);
+            builder.addDoubleProperty("Position(R)", this.posStatusValue.asSupplier()::get, null);
+            builder.addDoubleProperty("Temperature(C)", this.motor.getDeviceTemp().asSupplier()::get, null);
+        }
     }
 
     // COMMANDS

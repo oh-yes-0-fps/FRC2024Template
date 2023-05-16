@@ -10,7 +10,6 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.sendable.Sendable;
-import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilderImpl;
 
@@ -126,12 +125,12 @@ public class McqShuffleboardApi {
             return entries.get(name);
         }
 
-        public void addSendable(Sendable sendable) {
-            String name = SendableRegistry.getName(sendable);
+        public void addSendable(String name, Sendable sendable) {
             var builder = new SendableBuilderImpl();
             builder.setTable(table.getSubTable(name));
             sendable.initSendable(builder);
             builder.startListeners();
+            table.getSubTable(name).getEntry(".controllable").setBoolean(false);
             tasks.put(path.compress() + "/" + name, () -> builder.update());
         }
 

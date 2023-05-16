@@ -2,7 +2,6 @@ package com.igknighters.util.logging;
 
 import edu.wpi.first.util.datalog.*;
 import edu.wpi.first.util.sendable.Sendable;
-import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.DataLogManager;
 
 import java.util.Collection;
@@ -110,8 +109,7 @@ public class DataLogger {
         dataLogMap.put(entry, valueSupplier);
     }
 
-    public static void addSendable(Sendable sendable, String pathPrefix) {
-        String name = SendableRegistry.getName(sendable);
+    public static void addSendable(Sendable sendable, String pathPrefix, String name) {
         String prefix;
         if (!pathPrefix.endsWith("/")) {
             prefix = pathPrefix + "/" + name + "/";

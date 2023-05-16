@@ -436,8 +436,8 @@ public class McqTalonFX implements Sendable{
 
     @Override
     public void initSendable(SendableBuilder builder) {
-        builder.setSmartDashboardType("McqCanCoder");
-        builder.addBooleanProperty("Enabled", () -> this.enabled(), null);
+        builder.setSmartDashboardType("McqTalonFX");
+        builder.addBooleanProperty(".enabled", () -> this.enabled(), null);
         if (this.enabled()) {
             builder.addDoubleProperty("Velocity(RPS)", this.veloStatusValue.asSupplier()::get, null);
             builder.addDoubleProperty("Position(R)", this.posStatusValue.asSupplier()::get, null);

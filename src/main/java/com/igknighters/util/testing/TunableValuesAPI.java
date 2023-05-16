@@ -41,21 +41,21 @@ public class TunableValuesAPI {
         }
     }
 
-    public static NetworkTableEntry getTunableNTEntry(String subsystemName, String name) {
-        return tunableNetworkTable.getSubTable(subsystemName).getEntry(name);
+    public static NetworkTableEntry getTunableNTEntry(String table, String name) {
+        return tunableNetworkTable.getSubTable(table).getEntry(name);
     }
 
-    public static NetworkTableEntry getTunableNTEntry(String subsystemName, String name,
+    public static NetworkTableEntry getTunableNTEntry(String table, String name,
             TunableValePlacement placement) {
         switch (placement) {
             case Shuffleboard:
-                return NetworkTableInstance.getDefault().getTable("Shuffleboard").getSubTable(subsystemName)
+                return NetworkTableInstance.getDefault().getTable("Shuffleboard").getSubTable(table)
                         .getEntry(name);
             case SmartDashboard:
-                return NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable(subsystemName)
+                return NetworkTableInstance.getDefault().getTable("SmartDashboard").getSubTable(table)
                         .getEntry(name);
             case TunableValues:
-                return tunableNetworkTable.getSubTable(subsystemName).getEntry(name);
+                return tunableNetworkTable.getSubTable(table).getEntry(name);
             default:
                 return null;
         }
@@ -64,9 +64,20 @@ public class TunableValuesAPI {
     public class TunableDouble {
         private final NetworkTableEntry entry;
 
-        public TunableDouble(String subsystemName, String name, Double defaultValue) {
-            this.entry = getTunableNTEntry(subsystemName, name);
+        public TunableDouble(String table, String name, Double defaultValue) {
+            this.entry = getTunableNTEntry(table, name);
             entry.setDouble(defaultValue);
+        }
+
+        public TunableDouble(String name, Double defaultValue) {
+            this.entry = getTunableNTEntry(name);
+            entry.setDouble(defaultValue);
+        }
+
+        /**Default value is 0.0 */
+        public TunableDouble(String name) {
+            this.entry = getTunableNTEntry(name);
+            entry.setDouble(0.0);
         }
 
         public Double get() {
@@ -81,9 +92,20 @@ public class TunableValuesAPI {
     public class TunableBoolean {
         private final NetworkTableEntry entry;
 
-        public TunableBoolean(String path, Boolean defaultValue, TunableValePlacement placement) {
-            this.entry = tunableNetworkTable.getEntry(path);
+        public TunableBoolean(String table, String name, Boolean defaultValue) {
+            this.entry = getTunableNTEntry(table, name);
             entry.setBoolean(defaultValue);
+        }
+
+        public TunableBoolean(String name, Boolean defaultValue) {
+            this.entry = getTunableNTEntry(name);
+            entry.setBoolean(defaultValue);
+        }
+
+        /**Default value is false */
+        public TunableBoolean(String name) {
+            this.entry = getTunableNTEntry(name);
+            entry.setBoolean(false);
         }
 
         public Boolean get() {

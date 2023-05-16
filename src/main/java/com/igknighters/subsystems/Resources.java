@@ -12,13 +12,13 @@ public class Resources {
 
     //## I'm adding a new subsystem, what do i do?
     //1. add a new subsystem to the Subsystems enum with pascal case name
-    //2. add a new subsystem to the PackagedSubsystems class
-    //3. add it to wanted robot ids in \constants\RobotSetup.java
+    //2. add a new subsystem to the AllSubsystems class
+    //3. add it to wanted robot ids in ..\constants\RobotSetup.java
 
 
     /**
      * a way to pass around data about enabled subsystems
-    */
+     */
     public enum Subsystems {
         //add new subsystems here with names in Pascal Case
         Example("Example");

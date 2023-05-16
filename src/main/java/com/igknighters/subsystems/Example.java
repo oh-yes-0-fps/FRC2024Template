@@ -6,17 +6,22 @@ package com.igknighters.subsystems;
 
 import com.igknighters.constants.ConstValues;
 import com.igknighters.subsystems.Resources.McqSubsystemRequirements;
+import com.igknighters.util.hardware.McqTalonFX;
 import com.igknighters.util.logging.AutoLog.AL;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Example extends SubsystemBase implements McqSubsystemRequirements {
 
-    @AL.DataLog
+    @AL.SmartDashboard(oneShot = true)
     private String name = ConstValues.kExample.ROBOT_NAME;
 
     @AL.Tunable
+    @AL.Shuffleboard
     private double randomDouble = 0.0;
+
+    @AL.Shuffleboard
+    private McqTalonFX talon = new McqTalonFX(0, false);
 
     /** Creates a new Example. */
     public Example() {

@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.util.sendable.Sendable;
 
 public class AutoLog {
 
@@ -64,9 +65,12 @@ public class AutoLog {
     }
 
     /** Subsystem Logging */
-    public static class SSL { // yes ik ssl is already a tech name but i dont care
+    public static class AL { // yes ik ssl is already a tech name but i dont care
         /**
          * Annotate a field or method IN A SUBSYSTEM with this to log it to shuffleboard
+         * 
+         * <p> Supported Types(primitive or not): Double, Boolean, String, Integer, <br>
+         * Double[], Boolean[], String[], Integer[], Sendable
          * 
          * @param pos    [optional] the position of the widget on the shuffleboard
          * @param size   [optional] the size of the widget on the shuffleboard
@@ -76,16 +80,19 @@ public class AutoLog {
         @Target({ ElementType.FIELD, ElementType.METHOD })
         public @interface Shuffleboard {
             /** {Column, Row} | */
-            public int[] pos() default { 0, 0 };
+            public int[] pos() default {};
 
             /** {Width, Height} | */
-            public int[] size() default { 1, 1 };
+            public int[] size() default {};
 
             public String widget() default "";
         }
 
         /**
          * Annotate a field or method IN A SUBSYSTEM with this to log it to datalog
+         * 
+         * <p> Supported Types(primitive or not): Double, Boolean, String, Integer, <br>
+         * Double[], Boolean[], String[], Integer[], Sendable
          * 
          * @param Path    [optional] the path to log to
          * @param oneShot [optional] whether or not to only log once
@@ -102,6 +109,9 @@ public class AutoLog {
          * Annotate a field or method IN A SUBSYSTEM with this to log it to
          * SmartDashboard
          * 
+         * <p> Supported Types(primitive or not): Double, Boolean, String, Integer, <br>
+         * Double[], Boolean[], String[], Integer[], Sendable
+         * 
          * @param oneShot [optional] whether or not to only log once
          */
         @Retention(RetentionPolicy.RUNTIME)
@@ -110,6 +120,16 @@ public class AutoLog {
             public boolean oneShot() default false;
         }
 
+        /**
+         * Annotate a field or method IN A SUBSYSTEM with this to post it to NT in debug <br>
+         * the NT entry is editable and will live update the value
+         * 
+         * <p> Supported Types(primitive only): double, boolean
+         * 
+         * Can be used in combination with '@{@link Shuffleboard}' to post to Shuffleboard
+         * and '@{@link SmartDashboard}' to post to SmartDashboard <p>
+         * If used by itself will be sent to the TunableValues networktable
+         */
         @Retention(RetentionPolicy.RUNTIME)
         @Target({ ElementType.FIELD })
         public @interface Tunable {
@@ -119,7 +139,7 @@ public class AutoLog {
     private static enum DataType {
         Double(Double.class), Boolean(Boolean.class), String(String.class), Integer(Integer.class),
         DoubleArray(Double[].class), BooleanArray(Boolean[].class), StringArray(String[].class),
-        IntegerArray(Integer[].class);
+        IntegerArray(Integer[].class), Sendable(Sendable.class);
 
         @SuppressWarnings("unused")
         private final Class<?> cls;
@@ -129,6 +149,12 @@ public class AutoLog {
         }
 
         public static DataType fromClass(Class<?> clazz) throws IllegalArgumentException {
+            // if clazz has Sendable interace
+            for (Class<?> cls : clazz.getInterfaces()) {
+                if (cls.equals(Sendable.class)) {
+                    return Sendable;
+                }
+            }
             clazz = complexFromPrim(clazz);
             if (clazz.equals(Double.class)) {
                 return Double;
@@ -180,7 +206,7 @@ public class AutoLog {
                 return field.get(subsystem);
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 DriverStation.reportWarning(field.getName() + " supllier is erroring", false);
-                return "";
+                return null;
             }
         };
     }
@@ -191,7 +217,7 @@ public class AutoLog {
                 return method.invoke(subsystem);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 DriverStation.reportWarning(method.getName() + " supllier is erroring", false);
-                return false;
+                return null;
             }
         };
     }
@@ -202,112 +228,56 @@ public class AutoLog {
                 if (oneShot) {
                     DataLogger.oneShotDouble(path, (Double) supplier.get());
                 } else {
-                    DataLogger.addDouble(path, () -> {
-                        try {
-                            return (Double) supplier.get();
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(path + " supllier is erroring", false);
-                            return 0.0;
-                        }
-                    });
+                    DataLogger.addDouble(path, () -> (Double) supplier.get());
                 }
                 break;
             case Boolean:
                 if (oneShot) {
                     DataLogger.oneShotBoolean(path, (Boolean) supplier.get());
                 } else {
-                    DataLogger.addBoolean(path, () -> {
-                        try {
-                            return (Boolean) supplier.get();
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(path + " supllier is erroring", false);
-                            return false;
-                        }
-                    });
+                    DataLogger.addBoolean(path, () -> (Boolean) supplier.get());
                 }
                 break;
             case String:
                 if (oneShot) {
                     DataLogger.oneShotString(path, (String) supplier.get());
                 } else {
-                    DataLogger.addString(path, () -> {
-                        try {
-                            return (String) supplier.get();
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(path + " supllier is erroring", false);
-                            return "";
-                        }
-                    });
+                    DataLogger.addString(path, () -> (String) supplier.get());
                 }
                 break;
             case Integer:
                 if (oneShot) {
-                    DataLogger.oneShotInteger(path, (Integer) supplier.get());
+                    DataLogger.oneShotInteger(path, (Long) supplier.get());
                 } else {
-                    DataLogger.addInteger(path, () -> {
-                        try {
-                            return (Long) supplier.get();
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(path + " supllier is erroring", false);
-                            return Long.valueOf(0);
-                        }
-                    });
+                    DataLogger.addInteger(path, () -> (Long) supplier.get());
                 }
                 break;
             case DoubleArray:
                 if (oneShot) {
                     DataLogger.oneShotDoubleArray(path, (double[]) supplier.get());
                 } else {
-                    DataLogger.addDoubleArray(path, () -> {
-                        try {
-                            return (double[]) supplier.get();
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(path + " supllier is erroring", false);
-                            return new double[0];
-                        }
-                    });
+                    DataLogger.addDoubleArray(path, () -> (double[]) supplier.get());
                 }
                 break;
             case BooleanArray:
                 if (oneShot) {
                     DataLogger.oneShotBooleanArray(path, (boolean[]) supplier.get());
                 } else {
-                    DataLogger.addBooleanArray(path, () -> {
-                        try {
-                            return (boolean[]) supplier.get();
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(path + " supllier is erroring", false);
-                            return new boolean[0];
-                        }
-                    });
+                    DataLogger.addBooleanArray(path, () -> (boolean[]) supplier.get());
                 }
                 break;
             case StringArray:
                 if (oneShot) {
                     DataLogger.oneShotStringArray(path, (String[]) supplier.get());
                 } else {
-                    DataLogger.addStringArray(path, () -> {
-                        try {
-                            return (String[]) supplier.get();
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(path + " supllier is erroring", false);
-                            return new String[0];
-                        }
-                    });
+                    DataLogger.addStringArray(path, () -> (String[]) supplier.get());
                 }
                 break;
             case IntegerArray:
                 if (oneShot) {
                     DataLogger.oneShotIntegerArray(path, (long[]) supplier.get());
                 } else {
-                    DataLogger.addIntegerArray(path, () -> {
-                        try {
-                            return (long[]) supplier.get();
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(path + " supllier is erroring", false);
-                            return new long[0];
-                        }
-                    });
+                    DataLogger.addIntegerArray(path, () -> (long[]) supplier.get());
                 }
                 break;
             default:
@@ -322,11 +292,7 @@ public class AutoLog {
                     SmartDashboard.putNumber(keyPath, (Double) supplier.get());
                 } else {
                     smartdashboardRunnables.add(() -> {
-                        try {
-                            SmartDashboard.putNumber(keyPath, (Double) supplier.get());
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(keyPath + " supllier is erroring", false);
-                        }
+                        SmartDashboard.putNumber(keyPath, (Double) supplier.get());
                     });
                 }
                 break;
@@ -335,11 +301,7 @@ public class AutoLog {
                     SmartDashboard.putBoolean(keyPath, (Boolean) supplier.get());
                 } else {
                     smartdashboardRunnables.add(() -> {
-                        try {
-                            SmartDashboard.putBoolean(keyPath, (Boolean) supplier.get());
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(keyPath + " supllier is erroring", false);
-                        }
+                        SmartDashboard.putBoolean(keyPath, (Boolean) supplier.get());
                     });
                 }
                 break;
@@ -348,11 +310,7 @@ public class AutoLog {
                     SmartDashboard.putString(keyPath, (String) supplier.get());
                 } else {
                     smartdashboardRunnables.add(() -> {
-                        try {
-                            SmartDashboard.putString(keyPath, (String) supplier.get());
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(keyPath + " supllier is erroring", false);
-                        }
+                        SmartDashboard.putString(keyPath, (String) supplier.get());
                     });
                 }
                 break;
@@ -361,11 +319,7 @@ public class AutoLog {
                     SmartDashboard.putNumber(keyPath, (Integer) supplier.get());
                 } else {
                     smartdashboardRunnables.add(() -> {
-                        try {
-                            SmartDashboard.putNumber(keyPath, (Integer) supplier.get());
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(keyPath + " supllier is erroring", false);
-                        }
+                        SmartDashboard.putNumber(keyPath, (Integer) supplier.get());
                     });
                 }
                 break;
@@ -374,11 +328,7 @@ public class AutoLog {
                     SmartDashboard.putNumberArray(keyPath, (double[]) supplier.get());
                 } else {
                     smartdashboardRunnables.add(() -> {
-                        try {
-                            SmartDashboard.putNumberArray(keyPath, (double[]) supplier.get());
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(keyPath + " supllier is erroring", false);
-                        }
+                        SmartDashboard.putNumberArray(keyPath, (double[]) supplier.get());
                     });
                 }
                 break;
@@ -387,11 +337,7 @@ public class AutoLog {
                     SmartDashboard.putBooleanArray(keyPath, (boolean[]) supplier.get());
                 } else {
                     smartdashboardRunnables.add(() -> {
-                        try {
-                            SmartDashboard.putBooleanArray(keyPath, (boolean[]) supplier.get());
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(keyPath + " supllier is erroring", false);
-                        }
+                        SmartDashboard.putBooleanArray(keyPath, (boolean[]) supplier.get());
                     });
                 }
                 break;
@@ -400,11 +346,7 @@ public class AutoLog {
                     SmartDashboard.putStringArray(keyPath, (String[]) supplier.get());
                 } else {
                     smartdashboardRunnables.add(() -> {
-                        try {
-                            SmartDashboard.putStringArray(keyPath, (String[]) supplier.get());
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(keyPath + " supllier is erroring", false);
-                        }
+                        SmartDashboard.putStringArray(keyPath, (String[]) supplier.get());
                     });
                 }
                 break;
@@ -413,11 +355,7 @@ public class AutoLog {
                     SmartDashboard.putNumberArray(keyPath, (double[]) supplier.get());
                 } else {
                     smartdashboardRunnables.add(() -> {
-                        try {
-                            SmartDashboard.putNumberArray(keyPath, (double[]) supplier.get());
-                        } catch (IllegalArgumentException e) {
-                            DriverStation.reportWarning(keyPath + " supllier is erroring", false);
-                        }
+                        SmartDashboard.putNumberArray(keyPath, (double[]) supplier.get());
                     });
                 }
                 break;
@@ -427,13 +365,13 @@ public class AutoLog {
     }
 
     private static void shuffleboardWidgetHelper(Supplier<?> supplier, DataType type, String f_name, String ss_name,
-            SSL.Shuffleboard annotation) {
+            AL.Shuffleboard annotation) {
         McqShuffleboardApi.ShuffleEntry entry = McqShuffleboardApi.getTab(ss_name).addEntry(f_name, supplier);
         Map<MetadataFields, Object> metadata = new HashMap<>();
-        if (annotation.pos() != new int[] { 0, 0 }) {
+        if (annotation.pos().length > 0) {
             metadata.put(MetadataFields.Position, new double[] { annotation.pos()[0], annotation.pos()[1] });
         }
-        if (annotation.size() != new int[] { 1, 1 }) {
+        if (annotation.size().length > 0) {
             metadata.put(MetadataFields.Size, new double[] { annotation.size()[0], annotation.size()[1] });
         }
         if (annotation.widget().length() > 0) {
@@ -445,7 +383,7 @@ public class AutoLog {
     public static void setupSubsystemLogging(SubsystemBase subsystem) {
         String ss_name = subsystem.getClass().getSimpleName();
         if (ConstValues.DEBUG) {
-            McqShuffleboardApi.getTab(ss_name).addSendable(subsystem);
+            McqShuffleboardApi.getTab(ss_name).addSendable(ss_name, subsystem);
         } else {
             String pathPrefix;
             if (datalogKeepsShuffleboardPath) {
@@ -453,108 +391,168 @@ public class AutoLog {
             } else {
                 pathPrefix = "";
             }
-            DataLogger.addSendable(subsystem, pathPrefix);
+            DataLogger.addSendable(subsystem, pathPrefix, ss_name);
         }
         for (Field field : subsystem.getClass().getDeclaredFields()) {
-            String loggerPort = "";
-            if (field.isAnnotationPresent(SSL.DataLog.class)) {
-                field.setAccessible(true);
-                SSL.DataLog annotation = field.getAnnotation(SSL.DataLog.class);
-                String name = field.getName();
-                String path = annotation.Path().equals("") ? ss_name + "/" + name : annotation.Path();
-                boolean oneShot = annotation.oneShot();
-                DataType type = DataType.fromClass(field.getType());
-                dataLoggerHelper(getSupplier(field, subsystem), type, path, oneShot);
-                loggerPort = "DataLog";
+            if (field.getAnnotations().length == 0) {
+                continue;
             }
-            if (field.isAnnotationPresent(SSL.SmartDashboard.class)) {
-                if (loggerPort != "") {
-                    throw new IllegalArgumentException(
-                            "Cannot have both " + loggerPort + " and SmartDashboard annotations on the same field");
+            if (field.isAnnotationPresent(AL.Tunable.class)) {
+                if (!ConstValues.DEBUG) {
+                    continue;
                 }
                 field.setAccessible(true);
-                SSL.SmartDashboard annotation = field.getAnnotation(SSL.SmartDashboard.class);
-                String key = ss_name + "/" + field.getName();
-                DataType type = DataType.fromClass(field.getType());
-                smartDashboardHelper(getSupplier(field, subsystem), type, key, annotation.oneShot());
-                loggerPort = "SmartDashboard";
-            }
-            if (field.isAnnotationPresent(SSL.Shuffleboard.class)) {
-                if (loggerPort != "") {
-                    throw new IllegalArgumentException(
-                            "Cannot have both " + loggerPort + " and Shuffleboard annotations on the same field");
+                String f_name = field.getName();
+                if (!(field.getType() == boolean.class || field.getType() == double.class)) {
+                    throw new IllegalArgumentException("Invalid Tunable type: " + ss_name + "." + f_name);
                 }
-                field.setAccessible(true);
-                SSL.Shuffleboard annotation = field.getAnnotation(SSL.Shuffleboard.class);
-                String name = camelToNormal(field.getName());
-                DataType type = DataType.fromClass(field.getType());
-                if (ConstValues.DEBUG) {
-                    shuffleboardWidgetHelper(getSupplier(field, subsystem), type, name, ss_name, annotation);
-                } else {
-                    String path = "";
-                    if (datalogKeepsShuffleboardPath) {
-                        path = shuffleboardDLpath + ss_name + "/" + name;
-                    } else {
-                        path = ss_name + "/" + name;
+                if (field.isAnnotationPresent(AL.DataLog.class)) {
+                    throw new IllegalArgumentException(
+                            "Cannot have both Tunable and DataLog annotations: " + ss_name + "." + f_name);
+                }
+                String loggerPort = "";
+                if (field.isAnnotationPresent(AL.SmartDashboard.class)) {
+                    var entry = TunableValuesAPI.getTunableNTEntry(ss_name, f_name,
+                        TunableValuesAPI.TunableValePlacement.SmartDashboard);
+                    try {
+                        entry.setValue(field.get(subsystem));
+                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                        DriverStation.reportError("Error initializing Tunable value: " + ss_name + "." + f_name, false);
+                        continue;
                     }
-                    dataLoggerHelper(getSupplier(field, subsystem), type, path, false);
-                }
-                loggerPort = "Shuffleboard";
-            }
-            if (field.isAnnotationPresent(SSL.Tunable.class)) {
-                if (loggerPort != "") {
-                    throw new IllegalArgumentException(
-                            "Cannot have both " + loggerPort + " and Tunable annotations on the same field");
-                }
-                field.setAccessible(true);
-                String name = field.getName();
-                if (ConstValues.DEBUG) {
-                    if (field.getType() == boolean.class) {
-                        NetworkTableEntry entry = TunableValuesAPI.getTunableNTEntry(ss_name, name);
+                    TunableValuesAPI.addTunableRunnable(() -> {
                         try {
-                            entry.setBoolean(field.getBoolean(subsystem));
-                            entry.setDefaultBoolean(field.getBoolean(subsystem));
+                            field.set(subsystem, entry.getValue().getValue());
                         } catch (IllegalArgumentException | IllegalAccessException e) {
-                            DriverStation.reportError("Error setting tunable value for " + ss_name + "/" + name,
+                            DriverStation.reportError("Error setting Tunable SmartDashboard value for " + ss_name + "/" + f_name,
                                     false);
                         }
-                        TunableValuesAPI.addTunableRunnable(() -> {
-                            try {
-                                field.setBoolean(subsystem, entry.getBoolean(field.getBoolean(subsystem)));
-                            } catch (IllegalArgumentException | IllegalAccessException e) {
-                                DriverStation.reportError("Error setting tunable value for " + ss_name + "/" + name,
-                                        false);
-                            }
-                        });
-                    } else if (field.getType() == double.class) {
-                        NetworkTableEntry entry = TunableValuesAPI.getTunableNTEntry(ss_name, name);
-                        try {
-                            entry.setDouble(field.getDouble(subsystem));
-                            entry.setDefaultDouble(field.getDouble(subsystem));
-                        } catch (IllegalArgumentException | IllegalAccessException e) {
-                            DriverStation.reportError("Error setting tunable value for " + ss_name + "/" + name, true);
-                        }
-                        TunableValuesAPI.addTunableRunnable(() -> {
-                            try {
-                                field.setDouble(subsystem, entry.getDouble(field.getDouble(subsystem)));
-                            } catch (IllegalArgumentException | IllegalAccessException e) {
-                                DriverStation.reportError("Error setting tunable value for " + ss_name + "/" + name,
-                                        true);
-                            }
-                        });
-                    } else {
-                        throw new IllegalArgumentException(
-                                "Tunable annotation can only be used on boolean or double [primitive] fields");
-                    }
+                    });
+                    loggerPort = "SmartDashboard";
                 }
-                loggerPort = "Tunable";
+                if (field.isAnnotationPresent(AL.Shuffleboard.class)) {
+                    if (loggerPort != "") {
+                        throw new IllegalArgumentException(
+                                "Cannot have both Shuffleboard and SmartDashboard annotations on the same tunable field");
+                    }
+                    var annotation = field.getAnnotation(AL.Shuffleboard.class);
+                    NetworkTableEntry entry;
+                    try {
+                        McqShuffleboardApi.ShuffleEntry sbEntry = McqShuffleboardApi
+                            .getTab(ss_name).addEntry(f_name, field.get(subsystem));
+                        Map<MetadataFields, Object> metadata = new HashMap<>();
+                        if (annotation.pos().length > 0) {
+                            metadata.put(MetadataFields.Position, new double[] { annotation.pos()[0], annotation.pos()[1] });
+                        }
+                        if (annotation.size().length > 0) {
+                            metadata.put(MetadataFields.Size, new double[] { annotation.size()[0], annotation.size()[1] });
+                        }
+                        if (annotation.widget().length() > 0) {
+                            metadata.put(MetadataFields.Widget, annotation.widget());
+                        }
+                        sbEntry.applyMetadata(metadata);
+                        entry = sbEntry.getNtEntry();
+                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                        DriverStation.reportError("Error initializing Tunable value: " + ss_name + "." + f_name, 
+                            false);
+                        continue;
+                    }
+                    TunableValuesAPI.addTunableRunnable(() -> {
+                        try {
+                            field.set(subsystem, entry.getValue().getValue());
+                        } catch (IllegalArgumentException | IllegalAccessException e) {
+                            DriverStation.reportError("Error setting Tunable Shuffleboard value for " + ss_name + "/" + f_name,
+                                    false);
+                        }
+                    });
+                    loggerPort = "Shuffleboard";
+                }
+                if (loggerPort == "") {
+                    var entry = TunableValuesAPI.getTunableNTEntry(ss_name, f_name,
+                        TunableValuesAPI.TunableValePlacement.TunableValues);
+                    try {
+                        entry.setValue(field.get(subsystem));
+                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                        DriverStation.reportError("Error initializing Tunable value: " + ss_name + "." + f_name, false);
+                        continue;
+                    }
+                    TunableValuesAPI.addTunableRunnable(() -> {
+                        try {
+                            field.set(subsystem, entry.getValue().getValue());
+                        } catch (IllegalArgumentException | IllegalAccessException e) {
+                            DriverStation.reportError("Error setting Tunable value for " + ss_name + "/" + f_name, false);
+                        }
+                    });
+                }
+            } else {
+                String loggerPort = "";
+                if (field.isAnnotationPresent(AL.DataLog.class)) {
+                    field.setAccessible(true);
+                    AL.DataLog annotation = field.getAnnotation(AL.DataLog.class);
+                    String name = field.getName();
+                    String path = annotation.Path().equals("") ? ss_name + "/" + name : annotation.Path();
+                    boolean oneShot = annotation.oneShot();
+                    DataType type = DataType.fromClass(field.getType());
+                    if (type == DataType.Sendable) {
+                        DataLogger.addSendable((Sendable) getSupplier(field, subsystem).get(), ss_name, name);
+                    } else {
+                        dataLoggerHelper(getSupplier(field, subsystem), type, path, oneShot);
+                    }
+                    loggerPort = "DataLog";
+                }
+                if (field.isAnnotationPresent(AL.SmartDashboard.class)) {
+                    if (loggerPort != "") {
+                        throw new IllegalArgumentException(
+                                "Cannot have both " + loggerPort + " and SmartDashboard annotations on the same field");
+                    }
+                    field.setAccessible(true);
+                    AL.SmartDashboard annotation = field.getAnnotation(AL.SmartDashboard.class);
+                    String key = ss_name + "." + field.getName();
+                    DataType type = DataType.fromClass(field.getType());
+                    if (type == DataType.Sendable) {
+                        SmartDashboard.putData(key, (Sendable) getSupplier(field, subsystem).get());
+                    } else {
+                        smartDashboardHelper(getSupplier(field, subsystem), type, key, annotation.oneShot());
+                    }
+                    loggerPort = "SmartDashboard";
+                }
+                if (field.isAnnotationPresent(AL.Shuffleboard.class)) {
+                    if (loggerPort != "") {
+                        throw new IllegalArgumentException(
+                                "Cannot have both " + loggerPort + " and Shuffleboard annotations on the same field");
+                    }
+                    field.setAccessible(true);
+                    AL.Shuffleboard annotation = field.getAnnotation(AL.Shuffleboard.class);
+                    String name = camelToNormal(field.getName());
+                    DataType type = DataType.fromClass(field.getType());
+                    if (ConstValues.DEBUG) {
+                        if (type == DataType.Sendable) {
+                            McqShuffleboardApi.getTab(ss_name).addSendable(name, (Sendable) getSupplier(field, subsystem).get());
+                        } else {
+                            shuffleboardWidgetHelper(getSupplier(field, subsystem), type, name, ss_name, annotation);
+                        }
+                    } else {
+                        String path = "";
+                        if (datalogKeepsShuffleboardPath) {
+                            path = shuffleboardDLpath + ss_name + "/" + name;
+                        } else {
+                            path = ss_name + "/" + name;
+                        }
+                        if (type == DataType.Sendable) {
+                            DataLogger.addSendable((Sendable) getSupplier(field, subsystem).get(), path, name);
+                        } else {
+                            dataLoggerHelper(getSupplier(field, subsystem), type, path, false);
+                        }
+                    }
+                    loggerPort = "Shuffleboard";
+                }
             }
         }
         for (Method method : subsystem.getClass().getDeclaredMethods()) {
             String loggerPort = "";
-            if (method.isAnnotationPresent(SSL.DataLog.class)) {
+            if (method.isAnnotationPresent(AL.DataLog.class)) {
                 method.setAccessible(true);
-                SSL.DataLog annotation = method.getAnnotation(SSL.DataLog.class);
+                AL.DataLog annotation = method.getAnnotation(AL.DataLog.class);
                 String name = methodNameFix(method.getName());
                 String path = annotation.Path().equals("") ? ss_name + "/" + name : annotation.Path();
                 boolean oneShot = annotation.oneShot();
@@ -562,25 +560,25 @@ public class AutoLog {
                 dataLoggerHelper(getSupplier(method, subsystem), type, path, oneShot);
                 loggerPort = "DataLog";
             }
-            if (method.isAnnotationPresent(SSL.SmartDashboard.class)) {
+            if (method.isAnnotationPresent(AL.SmartDashboard.class)) {
                 if (loggerPort != "") {
                     throw new IllegalArgumentException(
                             "Cannot have both " + loggerPort + " and SmartDashboard annotations on the same method");
                 }
                 method.setAccessible(true);
-                SSL.SmartDashboard annotation = method.getAnnotation(SSL.SmartDashboard.class);
+                AL.SmartDashboard annotation = method.getAnnotation(AL.SmartDashboard.class);
                 String key = ss_name + "/" + methodNameFix(method.getName());
                 DataType type = DataType.fromClass(method.getReturnType());
                 smartDashboardHelper(getSupplier(method, subsystem), type, key, annotation.oneShot());
                 loggerPort = "SmartDashboard";
             }
-            if (method.isAnnotationPresent(SSL.Shuffleboard.class)) {
+            if (method.isAnnotationPresent(AL.Shuffleboard.class)) {
                 if (loggerPort != "") {
                     throw new IllegalArgumentException(
                             "Cannot have both " + loggerPort + " and Shuffleboard annotations on the same method");
                 }
                 method.setAccessible(true);
-                SSL.Shuffleboard annotation = method.getAnnotation(SSL.Shuffleboard.class);
+                AL.Shuffleboard annotation = method.getAnnotation(AL.Shuffleboard.class);
                 String name = camelToNormal(methodNameFix(method.getName()));
                 DataType type = DataType.fromClass(method.getReturnType());
                 if (ConstValues.DEBUG) {

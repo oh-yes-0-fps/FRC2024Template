@@ -4,7 +4,7 @@
 1. Make the right way to the log also the easiest way to log. <br>
 2. Abstract the repetitive/annoying code away while still allowing for all the freedom needed. <br>
 3. Standardize the way we log across coders and subsystems. <br>
-4. Quicker iteration cycles with tunable values and little overhead at competition due to the debug falg. <br>
+4. Quicker iteration cycles with tunable values and minimal overhead at competition due to the debug flag. <br>
 
 ## How to use
 From ..util.AutoLog use the AL class <br>

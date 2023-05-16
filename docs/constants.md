@@ -39,8 +39,8 @@ public class Example extends SubsystemBase {
 }
 ```
 
-## Primitive constant robot declaration
-when needing to declare a primitive value diferently depending on you can use one of the primitive const annotations
+## Primitive constant mult-robot declaration
+when needing to declare a primitive value differently depending on you can use one of the primitive const annotations
 ```java
 public class ConstValues {
     //for this example robot names are yin and yang

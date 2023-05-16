@@ -12,15 +12,22 @@ public class utilPeriodic {
     private static final HashMap<String, Runnable> periodicRunnables = new HashMap<>();
     private static final HashMap<Frequency, Integer> frequencyMap = new HashMap<>();
     private static final NetworkTable periodicTimesTable = NetworkTableInstance.getDefault().getTable("PeriodicTimes");
-
-    public static void periodic() {
+    static {
         if (ConstValues.DEBUG) {
+            periodicTimesTable.getEntry("_").setString("Times are measured in miliseconds");
+        }
+    }
+
+    public static void periodic(double start) {
+        if (ConstValues.DEBUG) {
+            periodicTimesTable.getEntry("Command Scheduler").setDouble((Timer.getFPGATimestamp()-start)*1000);
             for (String key : periodicRunnables.keySet()) {
                 double startTime = Timer.getFPGATimestamp();
                 periodicRunnables.get(key).run();
                 double totalTime = Timer.getFPGATimestamp() - startTime;
-                periodicTimesTable.getEntry(key+"(ms)").setDouble(totalTime*1000);
+                periodicTimesTable.getEntry(key).setDouble(totalTime*1000);
             }
+            periodicTimesTable.getEntry("Robot").setDouble((Timer.getFPGATimestamp()-start)*1000);
         } else {
             periodicRunnables.values().forEach(Runnable::run);
         }

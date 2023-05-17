@@ -25,10 +25,11 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 public class Robot extends TimedRobot {
     private static final Notifier cycleNotifier = new Notifier(() -> utilPeriodic.startTimer(utilPeriodic.robotLoopKey));
     private final double startTime = Timer.getFPGATimestamp();
+    private final double notifierOffset = -0.002;
 
     public Robot() {
         super();
-        Timer.delay((startTime + this.getPeriod()) - Timer.getFPGATimestamp() - 0.002);
+        Timer.delay((startTime + this.getPeriod()) - Timer.getFPGATimestamp() + notifierOffset);
         cycleNotifier.startPeriodic(this.getPeriod());
         Threads.setCurrentThreadPriority(true, 15);
         BootupLogger.BootupLog("Robot Constructed");

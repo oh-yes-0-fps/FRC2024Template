@@ -5,13 +5,13 @@
 package com.igknighters.subsystems;
 
 import com.igknighters.constants.ConstValues;
-import com.igknighters.subsystems.Resources.McqSubsystemRequirements;
+import com.igknighters.subsystems.Resources.TestableSubsystem;
 import com.igknighters.util.hardware.McqTalonFX;
 import com.igknighters.util.logging.AutoLog.AL;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Example extends SubsystemBase implements McqSubsystemRequirements {
+public class Example extends SubsystemBase implements TestableSubsystem {
 
     @AL.SmartDashboard(oneShot = true)
     private String name = ConstValues.kExample.ROBOT_NAME;
@@ -39,9 +39,5 @@ public class Example extends SubsystemBase implements McqSubsystemRequirements {
     @Override
     public void periodic() {
         // This method will be called once per scheduler run
-    }
-
-    @Override
-    public void setDefaultCommand() {
     }
 }

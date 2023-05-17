@@ -1,12 +1,12 @@
 package com.igknighters.subsystems;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import com.igknighters.util.logging.AutoLog;
 import com.igknighters.util.logging.BootupLogger;
 
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Resources {
 
@@ -80,18 +80,18 @@ public class Resources {
      * @param subsystem the subsystem
      * @param enabled whether or not the subsystem is enabled
      */
-    public static class OptionalSubsystem <T extends Subsystem & McqSubsystemRequirements> {
+    public static class OptionalSubsystem <T extends TestableSubsystem> {
         private final T subsystem;
         private final boolean enabled;
         private OptionalSubsystem(T subsystem, boolean enabled) {
             this.subsystem = subsystem;
             this.enabled = enabled;
         }
-        public static <T extends SubsystemBase & McqSubsystemRequirements> OptionalSubsystem<T> contains(T subsystem) {
+        public static <T extends TestableSubsystem> OptionalSubsystem<T> contains(T subsystem) {
             return new OptionalSubsystem<T>(subsystem, true);
         }
 
-        public static <T extends SubsystemBase & McqSubsystemRequirements> OptionalSubsystem<T> empty() {
+        public static <T extends TestableSubsystem> OptionalSubsystem<T> empty() {
             return new OptionalSubsystem<T>(null, false);
         }
 
@@ -112,8 +112,11 @@ public class Resources {
 
     public static class AllSubsystems {
         private Subsystems[] subsystems;
+        private List<TestableSubsystem> subsystemsList;
+
         //add new subsystems here, make sure they are public
         public OptionalSubsystem<Example> example = OptionalSubsystem.empty();
+
         public AllSubsystems(Subsystems[] subsystems) {
             this.subsystems = subsystems;
             for (Subsystems subsystem : subsystems) {
@@ -129,7 +132,7 @@ public class Resources {
             }
         }
 
-        private <T extends SubsystemBase & McqSubsystemRequirements> OptionalSubsystem<T> createSubsystem(T subsystem) {
+        private <T extends TestableSubsystem> OptionalSubsystem<T> createSubsystem(T subsystem) {
             AutoLog.setupSubsystemLogging(subsystem);
             return OptionalSubsystem.contains(subsystem);
         }
@@ -137,9 +140,13 @@ public class Resources {
         public Subsystems[] getEnabledSubsystemEnums() {
             return subsystems;
         }
+
+        public List<TestableSubsystem> getEnabledSubsystems() {
+            return subsystemsList;
+        }
     }
 
-    public interface TestableSubsystem {
+    public interface TestableSubsystem  extends Subsystem{
 
         default public void testInit() {
             return;
@@ -152,13 +159,5 @@ public class Resources {
         default public void testEnd() {
             return;
         }
-    }
-
-    public interface SetableDefaultCommand {
-        public void setDefaultCommand();
-    }
-
-    //this is the interface that all subsystems must implement
-    public interface McqSubsystemRequirements extends TestableSubsystem, SetableDefaultCommand {
     }
 }

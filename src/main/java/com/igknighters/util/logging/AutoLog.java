@@ -380,10 +380,10 @@ public class AutoLog {
         entry.applyMetadata(metadata);
     }
 
-    public static void setupSubsystemLogging(SubsystemBase subsystem) {
+    public static void setupSubsystemLogging(Subsystem subsystem) {
         String ss_name = subsystem.getClass().getSimpleName();
         if (ConstValues.DEBUG) {
-            McqShuffleboardApi.getTab(ss_name).addSendable(ss_name, subsystem);
+            McqShuffleboardApi.getTab(ss_name).addSendable(ss_name, (SubsystemBase) subsystem);
         } else {
             String pathPrefix;
             if (datalogKeepsShuffleboardPath) {
@@ -391,7 +391,7 @@ public class AutoLog {
             } else {
                 pathPrefix = "";
             }
-            DataLogger.addSendable(subsystem, pathPrefix, ss_name);
+            DataLogger.addSendable((SubsystemBase) subsystem, pathPrefix, ss_name);
         }
         for (Field field : subsystem.getClass().getDeclaredFields()) {
             if (field.getAnnotations().length == 0) {

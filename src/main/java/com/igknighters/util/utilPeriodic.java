@@ -1,6 +1,8 @@
 package com.igknighters.util;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.igknighters.constants.ConstValues;
 import com.igknighters.util.logging.BootupLogger;
@@ -14,7 +16,7 @@ import edu.wpi.first.wpilibj.Timer;
 public class utilPeriodic {
     public static final String robotLoopKey = "RobotLoop";
     private static final HashMap<String, Runnable> periodicRunnables = new HashMap<>();
-    private static final HashMap<String, Double> times = new HashMap<>();
+    private static final ConcurrentMap<String, Double> times = new ConcurrentHashMap<>();
     private static final HashMap<Frequency, Integer> frequencyMap = new HashMap<>();
     private static final NetworkTable periodicTimesTable = NetworkTableInstance.getDefault().getTable("PeriodicTimes");
     static {

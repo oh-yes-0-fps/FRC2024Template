@@ -8,7 +8,6 @@ import com.igknighters.util.utilPeriodic;
 import com.igknighters.util.logging.BootupLogger;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 /**
@@ -22,6 +21,12 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  */
 public class Robot extends TimedRobot {
 
+    @Override
+    protected void loopFunc() {
+        utilPeriodic.startTimer(utilPeriodic.robotLoopKey);
+        super.loopFunc();
+    }
+
     /**
      * This function is run when the robot is first started up and should be used
      * for any
@@ -31,6 +36,7 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         BootupLogger.BootupLog("Robot Init");
         RobotContainer.robotStartup();
+        utilPeriodic.addCallback(this);
         BootupLogger.BootupLog("Done");
     }
 
@@ -46,9 +52,10 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void robotPeriodic() {
-        double periodicStartTime = Timer.getFPGATimestamp();
+        utilPeriodic.endTimer(utilPeriodic.robotLoopKey);
+        utilPeriodic.startTimer("CommandScheduler");
         CommandScheduler.getInstance().run();
-        utilPeriodic.periodic(periodicStartTime);
+        utilPeriodic.endTimer("CommandScheduler");
     }
 
     /** This function is called once when autonomous is enabled. */

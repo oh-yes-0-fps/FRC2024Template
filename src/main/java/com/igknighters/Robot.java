@@ -7,10 +7,7 @@ package com.igknighters;
 import com.igknighters.util.utilPeriodic;
 import com.igknighters.util.logging.BootupLogger;
 
-import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 /**
@@ -23,16 +20,11 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * project.
  */
 public class Robot extends TimedRobot {
-    private static final Notifier cycleNotifier = new Notifier(() -> utilPeriodic.startTimer(utilPeriodic.robotLoopKey));
-    private final double startTime = Timer.getFPGATimestamp();
-    private final double notifierOffset = -0.002;
 
-    public Robot() {
-        super();
-        Timer.delay((startTime + this.getPeriod()) - Timer.getFPGATimestamp() + notifierOffset);
-        cycleNotifier.startPeriodic(this.getPeriod());
-        Threads.setCurrentThreadPriority(true, 15);
-        BootupLogger.BootupLog("Robot Constructed");
+    @Override
+    protected void loopFunc() {
+        utilPeriodic.startTimer(utilPeriodic.robotLoopKey);
+        super.loopFunc();
     }
 
     /**
@@ -44,7 +36,7 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         BootupLogger.BootupLog("Robot Init");
         RobotContainer.robotStartup();
-        utilPeriodic.addCallbacks(this);
+        utilPeriodic.addCallback(this);
         BootupLogger.BootupLog("Done");
     }
 

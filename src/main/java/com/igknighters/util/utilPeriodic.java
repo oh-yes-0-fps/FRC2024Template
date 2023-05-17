@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 
 public class utilPeriodic {
-    public static final String robotLoopKey = "RobotLoop(+-2ms)";
+    public static final String robotLoopKey = "RobotLoop";
     private static final HashMap<String, Runnable> periodicRunnables = new HashMap<>();
     private static final HashMap<String, Double> times = new HashMap<>();
     private static final HashMap<Frequency, Integer> frequencyMap = new HashMap<>();
@@ -23,8 +23,8 @@ public class utilPeriodic {
         }
     }
 
-    public static void addCallbacks(TimedRobot robot) {
-        robot.addPeriodic(utilPeriodic::periodic, robot.getPeriod(), robot.getPeriod()/4);
+    public static void addCallback(TimedRobot robot) {
+        robot.addPeriodic(utilPeriodic::periodic, robot.getPeriod(), robot.getPeriod() / 4);
         BootupLogger.BootupLog("Periodic Callbacks Added");
     }
 
@@ -44,18 +44,13 @@ public class utilPeriodic {
         }
     }
 
-    //--period timing--//
+    // --period timing--//
     public static synchronized void startTimer(String key) {
         times.put(key, time());
     }
 
     public static synchronized void endTimer(String key) {
         if (!times.containsKey(key)) {
-            if (key == robotLoopKey) {
-                periodicTimesTable.getEntry(key).setDouble(0.0);
-                times.remove(key);
-                return;
-            }
             DriverStation.reportWarning("Periodic timer for " + key + " was never started", false);
             return;
         }
@@ -64,8 +59,7 @@ public class utilPeriodic {
         times.remove(key);
     }
 
-
-    //--adding periodics--//
+    // --adding periodics--//
 
     public static void addPeriodicRunnable(String key, Runnable runnable) {
         periodicRunnables.put(key, runnable);

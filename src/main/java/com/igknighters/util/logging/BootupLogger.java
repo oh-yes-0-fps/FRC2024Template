@@ -7,7 +7,7 @@ import com.igknighters.constants.ConstValues;
 
 public class BootupLogger {
     private static final StringLogEntry entry = new StringLogEntry(DataLogManager.getLog(), "/Bootup");
-    private static final String println_prefix = "[init] ";
+    private static final String println_prefix = "[bootup] ";
     static {
         entry.append("Bootup Logger initialized");
     }

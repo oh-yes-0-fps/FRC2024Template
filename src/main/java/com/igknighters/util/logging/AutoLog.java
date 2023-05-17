@@ -31,7 +31,7 @@ public class AutoLog {
     private static final Collection<Runnable> smartdashboardRunnables = new LinkedHashSet<>();
     static {
         utilPeriodic.addPeriodicRunnable(
-                "SmartDashboard", () -> smartdashboardRunnables.forEach(Runnable::run), Frequency.EveryOtherCycle);
+                "AutologSmartDashboard", () -> smartdashboardRunnables.forEach(Runnable::run), Frequency.EveryOtherCycle);
     }
 
     /**

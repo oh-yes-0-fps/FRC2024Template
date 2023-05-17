@@ -3,13 +3,17 @@ package com.igknighters.util;
 import java.util.HashMap;
 
 import com.igknighters.constants.ConstValues;
+import com.igknighters.util.logging.BootupLogger;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 
 public class utilPeriodic {
     private static final HashMap<String, Runnable> periodicRunnables = new HashMap<>();
+    private static final HashMap<String, Double> times = new HashMap<>();
     private static final HashMap<Frequency, Integer> frequencyMap = new HashMap<>();
     private static final NetworkTable periodicTimesTable = NetworkTableInstance.getDefault().getTable("PeriodicTimes");
     static {
@@ -18,19 +22,47 @@ public class utilPeriodic {
         }
     }
 
-    public static void periodic(double start) {
+    public static void addCallbacks(TimedRobot robot) {
+        robot.addPeriodic(utilPeriodic::periodic, robot.getPeriod(), robot.getPeriod()/4);
+        BootupLogger.BootupLog("Periodic Callbacks Added");
+    }
+
+    private static double time() {
+        return Timer.getFPGATimestamp();
+    }
+
+    public static void periodic() {
         if (ConstValues.DEBUG) {
-            periodicTimesTable.getEntry("Command Scheduler").setDouble((Timer.getFPGATimestamp()-start)*1000);
             for (String key : periodicRunnables.keySet()) {
-                double startTime = Timer.getFPGATimestamp();
+                startTimer(key);
                 periodicRunnables.get(key).run();
-                double totalTime = Timer.getFPGATimestamp() - startTime;
-                periodicTimesTable.getEntry(key).setDouble(totalTime*1000);
+                endTimer(key);
             }
-            periodicTimesTable.getEntry("Robot").setDouble((Timer.getFPGATimestamp()-start)*1000);
         } else {
             periodicRunnables.values().forEach(Runnable::run);
         }
+    }
+
+    //--period timing--//
+    public static synchronized void startTimer(String key) {
+        times.put(key, time());
+    }
+
+    public static synchronized void endTimer(String key) {
+        if (!times.containsKey(key)) {
+            DriverStation.reportWarning("Periodic timer for " + key + " was never started", false);
+            return;
+        }
+        double timeTakenMs = (time() - times.get(key)) * 1000;
+        periodicTimesTable.getEntry(key).setDouble(timeTakenMs);
+        times.remove(key);
+    }
+
+
+    //--adding periodics--//
+
+    public static void addPeriodicRunnable(String key, Runnable runnable) {
+        periodicRunnables.put(key, runnable);
     }
 
     public enum Frequency {
@@ -41,10 +73,6 @@ public class utilPeriodic {
         private Frequency(int value) {
             this.value = value;
         }
-    }
-
-    public static void addPeriodicRunnable(String key, Runnable runnable) {
-        periodicRunnables.put(key, runnable);
     }
 
     public static void addPeriodicRunnable(String key, Runnable runnable, Frequency frequency) {

@@ -25,7 +25,6 @@ public class Example extends SubsystemBase implements TestableSubsystem {
 
     /** Creates a new Example. */
     public Example() {
-        System.out.println("Hello " + name);
     }
 
     @AL.Shuffleboard(pos = { 3, 1 }, size = { 2, 1 })

@@ -7,6 +7,7 @@ package com.igknighters;
 import com.igknighters.util.utilPeriodic;
 import com.igknighters.util.logging.BootupLogger;
 
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -21,11 +22,27 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  */
 public class Robot extends TimedRobot {
 
+    //DONT TOUCH THIS
+
+    public Robot() {
+        super();
+        DataLogManager.getLog();
+        BootupLogger.BootupLog("Robot Constructed");
+    }
+
     @Override
     protected void loopFunc() {
         utilPeriodic.startTimer(utilPeriodic.robotLoopKey);
         super.loopFunc();
     }
+
+    @Override
+    public void startCompetition() {
+        BootupLogger.BootupLog("Competition Started");
+        super.startCompetition();
+    }
+
+    //END DONT TOUCH THIS
 
     /**
      * This function is run when the robot is first started up and should be used

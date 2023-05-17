@@ -596,6 +596,6 @@ public class AutoLog {
             }
         }
 
-        BootupLogger.BootupLog(ss_name + " subsystem logging setup");
+        BootupLogger.BootupLog(ss_name + " subsystem autologging setup");
     }
 }

@@ -2,6 +2,7 @@ package com.igknighters.subsystems;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.igknighters.util.logging.AutoLog;
 import com.igknighters.util.logging.BootupLogger;
@@ -123,16 +124,17 @@ public class Resources {
                 switch (subsystem) {
                     //add new cases for new subsystems
                     case Example:
-                        example = createSubsystem(new Example());
+                        example = createSubsystem(Example::new);
                         break;
                     default:
                         break;
                 }
-                BootupLogger.BootupLog("Subsystem " + subsystem.name + " initialized");
             }
         }
 
-        private <T extends TestableSubsystem> OptionalSubsystem<T> createSubsystem(T subsystem) {
+        private <T extends TestableSubsystem> OptionalSubsystem<T> createSubsystem(Supplier<T> subsystemSupplier) {
+            T subsystem = subsystemSupplier.get();
+            BootupLogger.BootupLog("Subsystem " + subsystem.getClass().getSimpleName() + " created");
             AutoLog.setupSubsystemLogging(subsystem);
             return OptionalSubsystem.contains(subsystem);
         }

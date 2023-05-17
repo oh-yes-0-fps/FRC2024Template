@@ -31,7 +31,7 @@ public class RobotSetup {
                 Subsystems.list("Example"), // can be constructed with strings(pascal case)
                 RobotConstID.YANG),
 
-        TestBoard("testBoard(yin)", Subsystems.none(), RobotConstID.YIN),
+        TestBoard("testBoard(yin)", Subsystems.all(), RobotConstID.YIN),
 
         Simulation("simulation(yin)", Subsystems.all(), RobotConstID.YIN),
 
@@ -69,7 +69,7 @@ public class RobotSetup {
             if (serialToID.containsKey(currentSerialNum)) {
                 currentID = serialToID.get(currentSerialNum);
             } else {
-                throw new RuntimeException("Robot ID not found");
+                throw new RuntimeException("Robot ID not found, " + currentSerialNum + " not in serialToID map");
             }
             BootupLogger.BootupLog("Robot Name: " + currentID.name);
         }

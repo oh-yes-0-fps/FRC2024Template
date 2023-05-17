@@ -10,6 +10,7 @@ import com.igknighters.util.logging.BootupLogger;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 /**
@@ -22,11 +23,12 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * project.
  */
 public class Robot extends TimedRobot {
-    private final Notifier cycleNotifier;
+    private static final Notifier cycleNotifier = new Notifier(() -> utilPeriodic.startTimer(utilPeriodic.robotLoopKey));
+    private final double startTime = Timer.getFPGATimestamp();
 
     public Robot() {
         super();
-        cycleNotifier = new Notifier(() -> utilPeriodic.startTimer("RobotLoop"));
+        Timer.delay((startTime + this.getPeriod()) - Timer.getFPGATimestamp() - 0.002);
         cycleNotifier.startPeriodic(this.getPeriod());
         Threads.setCurrentThreadPriority(true, 15);
         BootupLogger.BootupLog("Robot Constructed");
@@ -57,7 +59,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void robotPeriodic() {
-        utilPeriodic.endTimer("RobotLoop");
+        utilPeriodic.endTimer(utilPeriodic.robotLoopKey);
         utilPeriodic.startTimer("CommandScheduler");
         CommandScheduler.getInstance().run();
         utilPeriodic.endTimer("CommandScheduler");

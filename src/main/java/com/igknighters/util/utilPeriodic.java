@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 
 public class utilPeriodic {
+    public static final String robotLoopKey = "RobotLoop(+-2ms)";
     private static final HashMap<String, Runnable> periodicRunnables = new HashMap<>();
     private static final HashMap<String, Double> times = new HashMap<>();
     private static final HashMap<Frequency, Integer> frequencyMap = new HashMap<>();
@@ -50,6 +51,11 @@ public class utilPeriodic {
 
     public static synchronized void endTimer(String key) {
         if (!times.containsKey(key)) {
+            if (key == robotLoopKey) {
+                periodicTimesTable.getEntry(key).setDouble(0.0);
+                times.remove(key);
+                return;
+            }
             DriverStation.reportWarning("Periodic timer for " + key + " was never started", false);
             return;
         }

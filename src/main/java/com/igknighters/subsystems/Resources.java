@@ -1,7 +1,7 @@
 package com.igknighters.subsystems;
 
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.igknighters.util.logging.AutoLog;
@@ -75,48 +75,12 @@ public class Resources {
         }
     }
 
-    /**
-     * A class that holds a subsystem and whether or not it is enabled
-     * @param <T> extends Subsystem
-     * @param subsystem the subsystem
-     * @param enabled whether or not the subsystem is enabled
-     */
-    public static class OptionalSubsystem <T extends TestableSubsystem> {
-        private final T subsystem;
-        private final boolean enabled;
-        private OptionalSubsystem(T subsystem, boolean enabled) {
-            this.subsystem = subsystem;
-            this.enabled = enabled;
-        }
-        public static <T extends TestableSubsystem> OptionalSubsystem<T> contains(T subsystem) {
-            return new OptionalSubsystem<T>(subsystem, true);
-        }
-
-        public static <T extends TestableSubsystem> OptionalSubsystem<T> empty() {
-            return new OptionalSubsystem<T>(null, false);
-        }
-
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        public T getSubsystem() {
-            return subsystem;
-        }
-
-        public void map(Consumer<T> consumer) {
-            if (enabled) {
-                consumer.accept(subsystem);
-            }
-        }
-    }
-
     public static class AllSubsystems {
         private Subsystems[] subsystems;
         private List<TestableSubsystem> subsystemsList;
 
         //add new subsystems here, make sure they are public
-        public OptionalSubsystem<Example> example = OptionalSubsystem.empty();
+        public Optional<Example> example = Optional.empty();
 
         public AllSubsystems(Subsystems[] subsystems) {
             this.subsystems = subsystems;
@@ -132,11 +96,11 @@ public class Resources {
             }
         }
 
-        private <T extends TestableSubsystem> OptionalSubsystem<T> createSubsystem(Supplier<T> subsystemSupplier) {
+        private <T extends TestableSubsystem> Optional<T> createSubsystem(Supplier<T> subsystemSupplier) {
             T subsystem = subsystemSupplier.get();
             BootupLogger.BootupLog("Subsystem " + subsystem.getClass().getSimpleName() + " created");
             AutoLog.setupSubsystemLogging(subsystem);
-            return OptionalSubsystem.contains(subsystem);
+            return Optional.of(subsystem);
         }
 
         public Subsystems[] getEnabledSubsystemEnums() {

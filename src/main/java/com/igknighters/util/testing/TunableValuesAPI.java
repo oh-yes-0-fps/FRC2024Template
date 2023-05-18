@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 import com.igknighters.constants.ConstValues;
-import com.igknighters.util.utilPeriodic;
+import com.igknighters.util.UtilPeriodic;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -120,7 +120,7 @@ public class TunableValuesAPI {
     private static int lastRan = 0;
     static {
         if (ConstValues.DEBUG) {
-            utilPeriodic.addPeriodicRunnable("Tunable Updating", () -> {
+            UtilPeriodic.addPeriodicRunnable("Tunable Updating", () -> {
                 if (tunableRunnables.size() < 20) {
                     tunableRunnables.forEach(Runnable::run);
                 } else {

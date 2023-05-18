@@ -14,10 +14,10 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.igknighters.constants.ConstValues;
-import com.igknighters.util.utilPeriodic;
+import com.igknighters.util.UtilPeriodic;
 import com.igknighters.util.testing.TunableValuesAPI;
 import com.igknighters.util.logging.McqShuffleboardApi.MetadataFields;
-import com.igknighters.util.utilPeriodic.Frequency;
+import com.igknighters.util.UtilPeriodic.Frequency;
 
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -30,8 +30,8 @@ public class AutoLog {
 
     private static final Collection<Runnable> smartdashboardRunnables = new LinkedHashSet<>();
     static {
-        utilPeriodic.addPeriodicRunnable(
-                "AutologSmartDashboard", () -> smartdashboardRunnables.forEach(Runnable::run), Frequency.EveryOtherCycle);
+        UtilPeriodic.addPeriodicRunnable(
+            "AutologSmartDashboard", () -> smartdashboardRunnables.forEach(Runnable::run), Frequency.EveryOtherCycle);
     }
 
     /**
@@ -557,6 +557,9 @@ public class AutoLog {
                 String path = annotation.Path().equals("") ? ss_name + "/" + name : annotation.Path();
                 boolean oneShot = annotation.oneShot();
                 DataType type = DataType.fromClass(method.getReturnType());
+                if (method.getParameterCount() > 0) {
+                    throw new IllegalArgumentException("Cannot have parameters on a DataLog method");
+                }
                 dataLoggerHelper(getSupplier(method, subsystem), type, path, oneShot);
                 loggerPort = "DataLog";
             }
@@ -569,6 +572,9 @@ public class AutoLog {
                 AL.SmartDashboard annotation = method.getAnnotation(AL.SmartDashboard.class);
                 String key = ss_name + "/" + methodNameFix(method.getName());
                 DataType type = DataType.fromClass(method.getReturnType());
+                if (method.getParameterCount() > 0) {
+                    throw new IllegalArgumentException("Cannot have parameters on a DataLog method");
+                }
                 smartDashboardHelper(getSupplier(method, subsystem), type, key, annotation.oneShot());
                 loggerPort = "SmartDashboard";
             }
@@ -580,6 +586,9 @@ public class AutoLog {
                 method.setAccessible(true);
                 AL.Shuffleboard annotation = method.getAnnotation(AL.Shuffleboard.class);
                 String name = camelToNormal(methodNameFix(method.getName()));
+                if (method.getParameterCount() > 0) {
+                    throw new IllegalArgumentException("Cannot have parameters on a DataLog method");
+                }
                 DataType type = DataType.fromClass(method.getReturnType());
                 if (ConstValues.DEBUG) {
                     shuffleboardWidgetHelper(getSupplier(method, subsystem), type, name, ss_name, annotation);

@@ -1,6 +1,6 @@
 package com.igknighters.util.testing;
 
-import com.igknighters.util.utilPeriodic;
+import com.igknighters.util.UtilPeriodic;
 
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -15,7 +15,7 @@ public class ShuffleboardButton {
     SimpleWidget widget;
     private static final EventLoop eventLoop = new EventLoop();
     static {
-        utilPeriodic.addPeriodicRunnable("ShuffleboardButtons", eventLoop::poll);
+        UtilPeriodic.addPeriodicRunnable("ShuffleboardButtons", eventLoop::poll);
     }
     boolean testOnly = false;
 

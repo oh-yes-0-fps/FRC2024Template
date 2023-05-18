@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 
-public class utilPeriodic {
+public class UtilPeriodic {
     public static final String robotLoopKey = "RobotLoop";
     private static final HashMap<String, Runnable> periodicRunnables = new HashMap<>();
     private static final ConcurrentMap<String, Double> times = new ConcurrentHashMap<>();
@@ -26,7 +26,7 @@ public class utilPeriodic {
     }
 
     public static void addCallback(TimedRobot robot) {
-        robot.addPeriodic(utilPeriodic::periodic, robot.getPeriod(), robot.getPeriod() / 4);
+        robot.addPeriodic(UtilPeriodic::periodic, robot.getPeriod(), robot.getPeriod() / 4);
         BootupLogger.BootupLog("Periodic Callbacks Added");
     }
 

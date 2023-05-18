@@ -10,7 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.igknighters.util.utilPeriodic;
+import com.igknighters.util.UtilPeriodic;
 
 public class DataLogger {
     private static final Map<DataLogEntry, Supplier<?>> dataLogMap = new HashMap<>();
@@ -162,6 +162,6 @@ public class DataLogger {
         sendables.forEach(DataLogSendableBuilder::update);
     }
     static {
-        utilPeriodic.addPeriodicRunnable("DataLogger", DataLogger::update);
+        UtilPeriodic.addPeriodicRunnable("DataLogger", DataLogger::update);
     }
 }

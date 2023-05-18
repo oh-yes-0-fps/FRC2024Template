@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.igknighters.util.utilPeriodic;
+import com.igknighters.util.UtilPeriodic;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -21,7 +21,7 @@ public class McqShuffleboardApi {
     private static final Map<sbPath, ShuffleTable> tables = new HashMap<>();
     private static final Map<String, Runnable> tasks = new HashMap<>();
     static {
-        utilPeriodic.addPeriodicRunnable("McqShuffleboard", () -> tasks.values().forEach(Runnable::run));
+        UtilPeriodic.addPeriodicRunnable("McqShuffleboard", () -> tasks.values().forEach(Runnable::run));
     }
 
     private static class sbPath {

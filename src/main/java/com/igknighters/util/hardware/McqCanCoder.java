@@ -27,18 +27,26 @@ public class McqCanCoder implements Sendable {
     private StatusSignalValue<Double> posStatusValue;
     private StatusSignalValue<Double> absPosStatusValue;
 
-    public McqCanCoder(int deviceNumber, boolean isEnabled) {
+    public McqCanCoder(int deviceNumber, boolean isEnabled, String canBus) {
         this.deviceNumber = deviceNumber;
         this.hasCoder = isEnabled;
         if (hasCoder) {
-            canCoder = new CANcoder(deviceNumber);
+            canCoder = new CANcoder(deviceNumber, canBus);
             veloStatusValue = canCoder.getVelocity();
             posStatusValue = canCoder.getPosition();
             absPosStatusValue = canCoder.getAbsolutePosition();
-            BootupLogger.BootupLog("CANCoder " + deviceNumber + " initialized");
+            if (canBus.length() > 0) {
+                BootupLogger.BootupLog("CANCoder " + deviceNumber + " initialized on " + canBus);
+            } else {
+                BootupLogger.BootupLog("CANCoder " + deviceNumber + " initialized");
+            }
         } else {
             BootupLogger.BootupLog("CANCoder " + deviceNumber + " not initialized");
         }
+    }
+
+    public McqCanCoder(int deviceNumber, boolean isEnabled) {
+        this(deviceNumber, isEnabled, "");
     }
 
     public boolean enabled() {
@@ -81,9 +89,12 @@ public class McqCanCoder implements Sendable {
      * 
      * @param configFunc
      */
-    public void configerate(Consumer<CANcoderConfigurator> configFunc) {
+    public void configurate(Consumer<CANcoderConfigurator> configFunc) {
         if (hasCoder) {
-            canCoder.getConfigurator().apply(new CANcoderConfiguration());
+            var status = canCoder.getConfigurator().apply(new CANcoderConfiguration());
+            if (status.isError()) {
+                throw new RuntimeException("Failed to factory reset CanCoder " + deviceNumber);
+            }
             configFunc.accept(canCoder.getConfigurator());
         }
     }

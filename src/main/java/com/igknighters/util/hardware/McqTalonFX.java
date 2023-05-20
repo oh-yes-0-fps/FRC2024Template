@@ -30,7 +30,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
-public class McqTalonFX implements Sendable{
+public class McqTalonFX implements Sendable {
     private int deviceNumber;
     private boolean hasMotor = false;
     private TalonFX motor;
@@ -40,17 +40,25 @@ public class McqTalonFX implements Sendable{
 
     private boolean foc = false;
 
-    public McqTalonFX(int deviceNumber, boolean isEnabled) {
+    public McqTalonFX(int deviceNumber, boolean isEnabled, String canBus) {
         this.deviceNumber = deviceNumber;
         this.hasMotor = isEnabled;
         if (isEnabled) {
-            motor = new TalonFX(deviceNumber);
+            motor = new TalonFX(deviceNumber, canBus);
             veloStatusValue = motor.getVelocity();
             posStatusValue = motor.getRotorPosition();
-            BootupLogger.BootupLog("TalonFX " + deviceNumber + " initialized");
+            if (canBus.length() > 0) {
+                BootupLogger.BootupLog("TalonFX " + deviceNumber + " initialized on " + canBus);
+            } else {
+                BootupLogger.BootupLog("TalonFX " + deviceNumber + " initialized");
+            }
         } else {
             BootupLogger.BootupLog("TalonFX " + deviceNumber + " not initialized");
         }
+    }
+
+    public McqTalonFX(int deviceNumber, boolean isEnabled) {
+        this(deviceNumber, isEnabled, "");
     }
 
     public boolean enabled() {
@@ -121,12 +129,10 @@ public class McqTalonFX implements Sendable{
      * 
      * @param configFunc
      */
-    public void configerate(Consumer<TalonFXConfigurator> configFunc) {
+    public void configurate(Consumer<TalonFXConfigurator> configFunc) {
         if (hasMotor) {
             var status = motor.getConfigurator().apply(new TalonFXConfiguration());
             if (status.isError()) {
-                // DriverStation.reportError("Failed to factory reset TalonFX " + deviceNumber,
-                // false);
                 throw new RuntimeException("Failed to factory reset TalonFX " + deviceNumber);
             }
             configFunc.accept(motor.getConfigurator());

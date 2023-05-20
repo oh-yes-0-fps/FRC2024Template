@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.igknighters.subsystems.swerve.Swerve;
 import com.igknighters.util.logging.AutoLog;
 import com.igknighters.util.logging.BootupLogger;
 
@@ -22,7 +23,8 @@ public class Resources {
      */
     public enum Subsystems {
         //add new subsystems here with names in Pascal Case
-        Example("Example");
+        Example("Example"),
+        Swerve("Swerve");
 
         public final String name;
 
@@ -81,6 +83,7 @@ public class Resources {
 
         //add new subsystems here, make sure they are public
         public Optional<Example> example = Optional.empty();
+        public Optional<Swerve> swerve = Optional.empty();
 
         public AllSubsystems(Subsystems[] subsystems) {
             this.subsystems = subsystems;
@@ -89,6 +92,9 @@ public class Resources {
                     //add new cases for new subsystems
                     case Example:
                         example = createSubsystem(Example::new);
+                        break;
+                    case Swerve:
+                        swerve = createSubsystem(Swerve::new);
                         break;
                     default:
                         break;

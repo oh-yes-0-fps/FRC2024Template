@@ -4,10 +4,12 @@ package com.igknighters.subsystems.swerve;
 import com.igknighters.constants.ConstValues.kSwerve.kFrontLeft;
 import com.igknighters.constants.ConstValues.kSwerve.kFrontRight;
 import com.ctre.phoenixpro.hardware.Pigeon2;
+import com.igknighters.constants.ConstValues;
 import com.igknighters.constants.ConstValues.kSwerve;
 import com.igknighters.constants.ConstValues.kSwerve.kBackLeft;
 import com.igknighters.constants.ConstValues.kSwerve.kBackRight;
 import com.igknighters.subsystems.Resources.TestableSubsystem;
+import com.igknighters.subsystems.swerve.Pathing.Waypoint;
 import com.igknighters.util.logging.AutoLog.AL;
 
 import edu.wpi.first.math.VecBuilder;
@@ -47,7 +49,6 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
 
     @AL.Shuffleboard
     private Boolean useFocusPoint;
-    private Translation2d focusPoint;
 
     /** Creates a new Swerve. */
     public Swerve() {
@@ -68,64 +69,39 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
         return poseEstimator.getLatestPose();
     }
 
-    public Pose2d generateOffsetSetPoint(Translation2d magnitudeTranslation, Rotation2d rotation) {
-        double timeBetweenPoses = 0.02;
+    public Pose2d generateOffsetSetPoint(Translation2d normTrans, double normRot) {
+        double timeBetweenPoses = ConstValues.PERIODIC_TIME;
         var currPos = getCurrentPose();
         var maxDriveMps = kSwerve.MAX_DRIVE_VELOCITY;
-        var maxTurnRadPerSec = kSwerve.MAX_TURN_VELOCITY;
-
-        var translation = currPos.getTranslation();
-        var rotation2d = currPos.getRotation();
-
-        var moveX = magnitudeTranslation.getX() * maxDriveMps * timeBetweenPoses;
-        var moveY = magnitudeTranslation.getY() * maxDriveMps * timeBetweenPoses;
-        var moveRotation = rotation.getRadians() * maxTurnRadPerSec * timeBetweenPoses;
-
-        var newTranslation = translation.plus(new Translation2d(moveX, moveY));
-        var newRotation = rotation2d.plus(new Rotation2d(moveRotation));
-
-        return new Pose2d(newTranslation, newRotation);
+        var maxTurnRadps = kSwerve.MAX_TURN_VELOCITY;
+        return new Pose2d(new Translation2d(
+            normTrans.getX() * (maxDriveMps*timeBetweenPoses),
+            normTrans.getY() * (maxDriveMps*timeBetweenPoses))
+                .plus(currPos.getTranslation()),
+            new Rotation2d(normRot * (maxTurnRadps*timeBetweenPoses))
+                .plus(currPos.getRotation())
+        );
     }
 
-    public void pursueSetPoint(Waypoint waypoint) {
-        Rotation2d angleToSet = waypoint.getPose().getRotation();
-        var setPos = waypoint.getPose();
-        var currPos = getCurrentPose();
-        boolean justAngle = currPos.getTranslation().getDistance(setPos.getTranslation()) < 0.1;
-
-        if (this.useFocusPoint) {
-            //keep the robot pointed at the focus point
-            var cuurTranslation = currPos.getTranslation();
-            var focusTranslation = this.focusPoint;
-            //get the field relative angle needed to point at the focus point
-            var angleToFocus = Math.atan2(focusTranslation.getY() - cuurTranslation.getY(),
-                                            focusTranslation.getX() - cuurTranslation.getX());
-            angleToSet = Rotation2d.fromRadians(angleToFocus);
-        }
-
-        if (!justAngle) {
-            //create chassis speeds from the current position to the set point
-            var maxDriveMps = kSwerve.MAX_DRIVE_VELOCITY;
-            var maxTurnRadPerSec = kSwerve.MAX_TURN_VELOCITY;
-
-            var translation = currPos.getTranslation();
-            var rotation2d = currPos.getRotation();
-
-            var moveX = (setPos.getTranslation().getX() - translation.getX()) / timeBetweenPoses;
-            var moveY = (setPos.getTranslation().getY() - translation.getY()) / timeBetweenPoses;
-            var moveRotation = (angleToSet.getRadians() - rotation2d.getRadians()) / timeBetweenPoses;
-            //clamp move rotation to max turn velocity
-            moveRotation = Math.min(moveRotation, maxTurnRadPerSec);
-
-            //create chassis speeds
-            var chassisSpeeds = new ChassisSpeeds(moveX, moveY, moveRotation);
-            //convert chassis speeds to module speeds
-            var moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds);
-            SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, maxDriveMps);
-            //set the module speeds
-            setModuleStates(moduleStates);
-        } else {
-        }
+    public void pursueWaypoint(Waypoint waypoint) {
+        //current data
+        Pose2d currPos = getCurrentPose();
+        Rotation2d currAngle = currPos.getRotation().plus(Rotation2d.fromDegrees(90));
+        //waypoint data
+        double speed = waypoint.getSpeed();
+        Rotation2d rot = waypoint.getRotation();
+        Translation2d location = waypoint.getTranslation();
+        //calculate the velocity of the robot
+        Translation2d offset = location.minus(currPos.getTranslation());
+        double xVeloc = speed * (offset.getX() / offset.getNorm());
+        double yVeloc = speed * (offset.getY() / offset.getNorm());
+        //calculate the rotation of the robot
+        double rVeloc = rot.minus(currPos.getRotation()).getRadians() * (kSwerve.MAX_TURN_VELOCITY * ConstValues.PERIODIC_TIME);
+        //calculate the module states
+        var chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xVeloc, yVeloc, rVeloc, currAngle);
+        var moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds);
+        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, speed);
+        setModuleStates(moduleStates);
     }
 
     public void setModuleStates(SwerveModuleState[] moduleStates) {

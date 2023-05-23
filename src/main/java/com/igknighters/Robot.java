@@ -40,6 +40,7 @@ public class Robot extends TimedRobot {
     public void startCompetition() {
         BootupLogger.BootupLog("Competition Started");
         super.startCompetition();
+        UtilPeriodic.endTimer("BuiltinLogging");
     }
 
     //END DONT TOUCH THIS
@@ -73,6 +74,7 @@ public class Robot extends TimedRobot {
         UtilPeriodic.startTimer("CommandScheduler");
         CommandScheduler.getInstance().run();
         UtilPeriodic.endTimer("CommandScheduler");
+        UtilPeriodic.startTimer("BuiltinLogging");
     }
 
     /** This function is called once when autonomous is enabled. */

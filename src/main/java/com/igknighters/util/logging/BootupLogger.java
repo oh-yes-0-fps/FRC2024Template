@@ -11,7 +11,7 @@ public class BootupLogger {
     static {
         entry.append("Bootup Logger initialized");
     }
-    public static void BootupLog(String message) {
+    public static synchronized void BootupLog(String message) {
         entry.append(message);
         if (ConstValues.DEBUG) {
             System.out.println(println_prefix + message);

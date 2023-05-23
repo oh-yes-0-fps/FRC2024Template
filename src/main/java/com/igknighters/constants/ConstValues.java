@@ -56,6 +56,8 @@ public class ConstValues {
             public static final double ANGLE = 150d/7d;
         }
 
+        public static boolean SIMPLE_WAYPOINT_QUERIES = true;
+
         @DoubleConst(yin = 16d*Conv.FEET_TO_METERS, yang = 18d*Conv.FEET_TO_METERS)
         public static double MAX_DRIVE_VELOCITY;
         public static double MAX_DRIVE_ACCELERATION = 2.5;

@@ -33,7 +33,7 @@ public class RobotSetup {
 
         TestBoard("testBoard(yin)", Subsystems.all(), RobotConstID.YIN),
 
-        Simulation("simulation(yin)", Subsystems.list(Subsystems.Example), RobotConstID.YIN),
+        Simulation("simulation(yin)", Subsystems.all(), RobotConstID.YIN),
 
         // this will never be used as if this is hit an error will already have been thrown
         Unlabeled("", Subsystems.none(), RobotConstID.YANG);

@@ -28,12 +28,13 @@ public class SwerveModule implements Sendable {
         // all can be "hard-coded" enabled because this constructor is only called if
         // swerve is active
         // and all motors are needed for swerve
-        this.encoder = new McqCanCoder(encoderId, true);
+        this.encoder = new McqCanCoder(encoderId, false);
         this.driveMotor = new McqTalonFX(driveMotorId, false);
         this.angleMotor = new McqTalonFX(angleMotorId, false);
 
-        this.driveMotor.ifSimEnable();
-        this.angleMotor.ifSimEnable();
+        this.encoder.ifSimThenEnable();
+        this.driveMotor.ifSimThenEnable();
+        this.angleMotor.ifSimThenEnable();
 
         driveMotor.configurate((configerator) -> {
             var config = new TalonFXConfiguration();
@@ -68,9 +69,8 @@ public class SwerveModule implements Sendable {
     public void seedModule() {
         var canCoderPosResult = encoder.getPosition(PositionUnit.REVOLUTIONS);
         angleMotor.setSensorPosition(
-            PositionUnit.REVOLUTIONS,
-            canCoderPosResult.getValueThrow() * kSwerve.ANGLE_GEAR_RATIO
-        );
+                PositionUnit.REVOLUTIONS,
+                canCoderPosResult.getValueThrow() * kSwerve.ANGLE_GEAR_RATIO);
     }
 
     public void setState(SwerveModuleState state) {
@@ -116,5 +116,9 @@ public class SwerveModule implements Sendable {
     @Override
     public void initSendable(SendableBuilder builder) {
         // TODO
+    }
+
+    public void simulationPeriodic() {
+        
     }
 }

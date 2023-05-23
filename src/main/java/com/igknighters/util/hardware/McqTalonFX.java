@@ -34,6 +34,7 @@ public class McqTalonFX implements Sendable {
     private int deviceNumber;
     private boolean hasMotor = false;
     private TalonFX motor;
+    private String canBus;
 
     private StatusSignalValue<Double> veloStatusValue;
     private StatusSignalValue<Double> posStatusValue;
@@ -43,6 +44,7 @@ public class McqTalonFX implements Sendable {
     public McqTalonFX(int deviceNumber, boolean isEnabled, String canBus) {
         this.deviceNumber = deviceNumber;
         this.hasMotor = isEnabled;
+        this.canBus = canBus;
         if (isEnabled) {
             motor = new TalonFX(deviceNumber, canBus);
             veloStatusValue = motor.getVelocity();
@@ -68,10 +70,10 @@ public class McqTalonFX implements Sendable {
     /**
      * Forces the motor to be enabled in sim, is reccomended if your using it in sim
      */
-    public void ifSimEnable() {
+    public void ifSimThenEnable() {
         if (Robot.isSimulation()) {
             hasMotor = true;
-            motor = new TalonFX(deviceNumber);
+            motor = new TalonFX(deviceNumber, canBus);
             veloStatusValue = motor.getVelocity();
             posStatusValue = motor.getRotorPosition();
         }

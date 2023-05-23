@@ -9,6 +9,8 @@ import com.ctre.phoenixpro.configs.CANcoderConfigurator;
 import com.ctre.phoenixpro.configs.MagnetSensorConfigs;
 import com.ctre.phoenixpro.hardware.CANcoder;
 import com.ctre.phoenixpro.signals.SensorDirectionValue;
+import com.ctre.phoenixpro.sim.CANcoderSimState;
+import com.igknighters.Robot;
 import com.igknighters.util.hardware.OptionalHardwareUtil.HardwareSuccessResponse;
 import com.igknighters.util.hardware.OptionalHardwareUtil.HardwareValueResponse;
 import com.igknighters.util.hardware.OptionalHardwareUtil.PositionUnit;
@@ -22,6 +24,7 @@ public class McqCanCoder implements Sendable {
     private int deviceNumber;
     private boolean hasCoder = false;
     private CANcoder canCoder;
+    private String canBus;
 
     private StatusSignalValue<Double> veloStatusValue;
     private StatusSignalValue<Double> posStatusValue;
@@ -30,6 +33,7 @@ public class McqCanCoder implements Sendable {
     public McqCanCoder(int deviceNumber, boolean isEnabled, String canBus) {
         this.deviceNumber = deviceNumber;
         this.hasCoder = isEnabled;
+        this.canBus = canBus;
         if (hasCoder) {
             canCoder = new CANcoder(deviceNumber, canBus);
             veloStatusValue = canCoder.getVelocity();
@@ -53,8 +57,28 @@ public class McqCanCoder implements Sendable {
         return hasCoder;
     }
 
+    /**
+     * Forces the motor to be enabled in sim, is reccomended if your using it in sim
+     */
+    public void ifSimThenEnable() {
+        if (Robot.isSimulation()) {
+            hasCoder = true;
+            canCoder = new CANcoder(deviceNumber, canBus);
+            veloStatusValue = canCoder.getVelocity();
+            posStatusValue = canCoder.getPosition();
+            absPosStatusValue = canCoder.getAbsolutePosition();
+        }
+    }
+
     public int getDeviceID() {
         return deviceNumber;
+    }
+
+    public HardwareValueResponse<CANcoderSimState> getSimState() {
+        if (hasCoder) {
+            return HardwareValueResponse.contains(canCoder.getSimState());
+        }
+        return HardwareValueResponse.empty();
     }
 
     /**

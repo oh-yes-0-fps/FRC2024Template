@@ -7,12 +7,15 @@ import com.igknighters.controllers.DriverController;
 import com.igknighters.controllers.OperatorController;
 import com.igknighters.controllers.TestingController;
 import com.igknighters.subsystems.Resources.AllSubsystems;
+import com.igknighters.subsystems.swerve.Pathing;
 import com.igknighters.util.logging.LogInit;
 
 import edu.wpi.first.wpilibj.DriverStation;
 
 public class RobotContainer {
-    static { ConstantHelper.applyRoboConst(ConstValues.class); }
+    static {
+        ConstantHelper.applyRoboConst(ConstValues.class);
+    }
     private static final AllSubsystems allSubsystems = new AllSubsystems(RobotSetup.getRobotID().subsystems);
 
     private static final DriverController driverController = new DriverController(0);
@@ -25,6 +28,8 @@ public class RobotContainer {
         operatorController.assignButtons(allSubsystems);
         testingController.assignButtons(allSubsystems);
         LogInit.init();
+        Pathing.loadZones();
+        Pathing.loadZonePaths();
     }
 
     /// INITIALIZATION

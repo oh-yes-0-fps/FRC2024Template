@@ -146,7 +146,7 @@ public class McqTalonFX implements Sendable {
     public HardwareValueResponse<Double> getVelocity(VelocityUnit unitType) {
         Double outVal = 0.0;
         if (hasMotor) {
-            var val = veloStatusValue.waitForUpdate(0.02).getValue();
+            var val = veloStatusValue.refresh().getValue();
             switch (unitType) {
                 case RPS:
                     outVal = val;
@@ -168,7 +168,7 @@ public class McqTalonFX implements Sendable {
     public HardwareValueResponse<Double> getPosition(PositionUnit unitType) {
         Double outVal = 0.0;
         if (hasMotor) {
-            var val = posStatusValue.waitForUpdate(0.02).getValue();
+            var val = posStatusValue.refresh().getValue();
             switch (unitType) {
                 case REVOLUTIONS:
                     outVal = val;
@@ -192,7 +192,7 @@ public class McqTalonFX implements Sendable {
     public HardwareValueResponse<Double> getPositionAbsolute(PositionUnit unitType) {
         Double outVal = 0.0;
         if (hasMotor) {
-            var val = posStatusValue.waitForUpdate(0.02).getValue();
+            var val = posStatusValue.refresh().getValue();
             // val % 1 also works i think
             val = val - Math.floor(val);
             switch (unitType) {

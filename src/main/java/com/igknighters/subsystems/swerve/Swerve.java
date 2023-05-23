@@ -10,15 +10,19 @@ import com.igknighters.constants.ConstValues.kSwerve.kBackLeft;
 import com.igknighters.constants.ConstValues.kSwerve.kBackRight;
 import com.igknighters.subsystems.Resources.TestableSubsystem;
 import com.igknighters.subsystems.swerve.Pathing.Waypoint;
-import com.igknighters.util.logging.AutoLog.AL;
+import com.igknighters.util.logging.AutoLog.AL.Shuffleboard;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Swerve extends SubsystemBase implements TestableSubsystem {
@@ -41,18 +45,19 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
         }
     );
 
-    private final PoseEstimator poseEstimator = new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002));
+    private final SwerveDrivePoseEstimator poseEstimator;
 
-    private final Pigeon2 pidgeon;
+    @Shuffleboard
+    private final Field2d field = new Field2d();
+
+    private final Pigeon2 pigeon;
 
     private final SwerveModule[] modules;
 
-    @AL.Shuffleboard
-    private Boolean useFocusPoint;
-
     /** Creates a new Swerve. */
     public Swerve() {
-        pidgeon = new Pigeon2(kSwerve.GYRO_ID);
+        pigeon = new Pigeon2(kSwerve.GYRO_ID);
+        pigeon.reset();
 
         frontLeftModule = new SwerveModule(kFrontLeft.ENCODER_ID, kFrontLeft.DRIVE_MOTOR_ID,
                                             kFrontLeft.ANGLE_MOTOR_ID, kFrontLeft.ENCODER_OFFSET);
@@ -62,11 +67,29 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
                                             kBackLeft.ANGLE_MOTOR_ID, kBackLeft.ENCODER_OFFSET);
         backRightModule = new SwerveModule(kBackRight.ENCODER_ID, kBackRight.DRIVE_MOTOR_ID,
                                             kBackRight.ANGLE_MOTOR_ID, kBackRight.ENCODER_OFFSET);
-        modules = new SwerveModule[] {frontLeftModule, frontRightModule, backLeftModule, backRightModule};
+        modules = new SwerveModule[] {backRightModule, frontRightModule, frontLeftModule, backLeftModule};
+
+        poseEstimator = new SwerveDrivePoseEstimator(
+            kinematics,
+            new Rotation2d(), 
+            getModulePositions(), 
+            new Pose2d(new Translation2d(2.2, 1d), Rotation2d.fromDegrees(0d)),
+            VecBuilder.fill(0.9, 0.9, 0.1),
+            VecBuilder.fill(0.1, 0.1, 1)
+        );
+
+        Timer.delay(1);
+        seedAllModules();
+    }
+
+    public synchronized void seedAllModules() {
+        for (SwerveModule module : modules) {
+            module.seedModule();
+        }
     }
 
     public Pose2d getCurrentPose() {
-        return poseEstimator.getLatestPose();
+        return poseEstimator.getEstimatedPosition();
     }
 
     public Pose2d generateOffsetSetPoint(Translation2d normTrans, double normRot) {
@@ -88,7 +111,7 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
         Pose2d currPos = getCurrentPose();
         Rotation2d currAngle = currPos.getRotation().plus(Rotation2d.fromDegrees(90));
         //waypoint data
-        double speed = waypoint.getSpeed();
+        double speed = waypoint.getAdjSpeed();
         Rotation2d rot = waypoint.getRotation();
         Translation2d location = waypoint.getTranslation();
         //calculate the velocity of the robot
@@ -110,8 +133,21 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
         }
     }
 
+    public void stop() {
+        setModuleStates(new SwerveModuleState[4]);
+    }
+
+    public SwerveModulePosition[] getModulePositions() {
+        SwerveModulePosition[] positions = new SwerveModulePosition[4];
+        for (int i = 0; i < modules.length; i++) {
+            positions[i] = modules[i].getPosition();
+        }
+        return positions;
+    }
+
     @Override
     public void periodic() {
-        // This method will be called once per scheduler run
+        poseEstimator.update(pigeon.getRotation2d(), getModulePositions());
+        field.setRobotPose(getCurrentPose());
     }
 }

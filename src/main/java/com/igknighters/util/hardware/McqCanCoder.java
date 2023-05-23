@@ -106,7 +106,7 @@ public class McqCanCoder implements Sendable {
     public HardwareValueResponse<Double> getPosition(PositionUnit unitType) {
         Double outVal = 0.0;
         if (hasCoder) {
-            var val = posStatusValue.waitForUpdate(0.02).getValue();
+            var val = posStatusValue.refresh().getValue();
             switch (unitType) {
                 case REVOLUTIONS:
                     outVal = val;
@@ -126,7 +126,7 @@ public class McqCanCoder implements Sendable {
     public HardwareValueResponse<Double> getPositionAbsolute(PositionUnit unitType) {
         Double outVal = 0.0;
         if (hasCoder) {
-            var val = absPosStatusValue.waitForUpdate(0.02).getValue();
+            var val = absPosStatusValue.refresh().getValue();
             switch (unitType) {
                 case REVOLUTIONS:
                     outVal = val;
@@ -146,7 +146,7 @@ public class McqCanCoder implements Sendable {
     public HardwareValueResponse<Double> getVelocity(VelocityUnit unitType) {
         Double outVal = 0.0;
         if (hasCoder) {
-            var val = veloStatusValue.waitForUpdate(0.02).getValue();
+            var val = veloStatusValue.refresh().getValue();
             switch (unitType) {
                 case RPM:
                     outVal = val * 60;

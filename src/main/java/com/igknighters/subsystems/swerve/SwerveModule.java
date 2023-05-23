@@ -7,6 +7,7 @@ import com.igknighters.util.hardware.OptionalHardwareUtil.PositionUnit;
 import com.igknighters.util.hardware.OptionalHardwareUtil.VelocityUnit;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -27,9 +28,12 @@ public class SwerveModule implements Sendable {
         // all can be "hard-coded" enabled because this constructor is only called if
         // swerve is active
         // and all motors are needed for swerve
-        this.encoder = new McqCanCoder(encoderId, false);
+        this.encoder = new McqCanCoder(encoderId, true);
         this.driveMotor = new McqTalonFX(driveMotorId, false);
         this.angleMotor = new McqTalonFX(angleMotorId, false);
+
+        this.driveMotor.ifSimEnable();
+        this.angleMotor.ifSimEnable();
 
         driveMotor.configurate((configerator) -> {
             var config = new TalonFXConfiguration();
@@ -61,6 +65,14 @@ public class SwerveModule implements Sendable {
         });
     }
 
+    public void seedModule() {
+        var canCoderPosResult = encoder.getPosition(PositionUnit.REVOLUTIONS);
+        angleMotor.setSensorPosition(
+            PositionUnit.REVOLUTIONS,
+            canCoderPosResult.getValueThrow() * kSwerve.ANGLE_GEAR_RATIO
+        );
+    }
+
     public void setState(SwerveModuleState state) {
         var optimizedState = SwerveModuleState.optimize(state, getAngle());
         setAngle(optimizedState.angle);
@@ -69,6 +81,13 @@ public class SwerveModule implements Sendable {
 
     public SwerveModuleState getState() {
         return new SwerveModuleState(getVelocityMps(), getAngle());
+    }
+
+    public SwerveModulePosition getPosition() {
+        double driveRotations = driveMotor.getPosition(PositionUnit.REVOLUTIONS).getValueThrow();
+        double distance = (driveRotations / kSwerve.DRIVE_GEAR_RATIO) * (kSwerve.WHEEL_DIAMETER * Math.PI);
+        Rotation2d angle = getAngle();
+        return new SwerveModulePosition(distance, angle);
     }
 
     private Rotation2d getAngle() {

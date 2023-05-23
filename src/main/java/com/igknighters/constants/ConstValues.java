@@ -10,7 +10,7 @@ public class ConstValues {
     //all angles are in radians unless otherwise specified
     @NTIgnore
     @SuppressWarnings("unused")
-    private class Conv {
+    private static class Conv {
         public static final double FEET_TO_METERS = 0.3048;
         public static final double INCHES_TO_METERS = 0.0254;
         public static final double DEGREES_TO_RADIANS = Math.PI/180.0;
@@ -56,7 +56,7 @@ public class ConstValues {
             public static final double ANGLE = 150d/7d;
         }
 
-        public static boolean SIMPLE_WAYPOINT_QUERIES = true;
+        public static boolean PREFER_X_ORIENTED_PATHS = true;
 
         @DoubleConst(yin = 16d*Conv.FEET_TO_METERS, yang = 18d*Conv.FEET_TO_METERS)
         public static double MAX_DRIVE_VELOCITY;

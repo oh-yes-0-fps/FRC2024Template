@@ -177,7 +177,7 @@ public class ConstantHelper {
         }
         for (Field field : cls.getDeclaredFields()) {
             if (!Modifier.isStatic(field.getModifiers())) {
-                DriverStation.reportError("Non-static field " + cls.getName() + "." + field.getName()
+                DriverStation.reportError("Non-static field " + cls.getSimpleName() + "." + field.getName()
                         + " in constants", false);
                 continue;
             }

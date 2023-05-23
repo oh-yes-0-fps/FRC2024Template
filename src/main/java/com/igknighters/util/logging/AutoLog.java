@@ -19,6 +19,7 @@ import com.igknighters.util.testing.TunableValuesAPI;
 import com.igknighters.util.logging.McqShuffleboardApi.MetadataFields;
 import com.igknighters.util.UtilPeriodic.Frequency;
 
+import edu.wpi.first.networktables.NTSendable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -151,7 +152,7 @@ public class AutoLog {
         public static DataType fromClass(Class<?> clazz) throws IllegalArgumentException {
             // if clazz has Sendable interace
             for (Class<?> cls : clazz.getInterfaces()) {
-                if (cls.equals(Sendable.class)) {
+                if (cls.equals(Sendable.class) || cls.equals(NTSendable.class)) {
                     return Sendable;
                 }
             }

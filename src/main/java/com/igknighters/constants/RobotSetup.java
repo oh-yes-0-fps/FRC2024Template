@@ -31,6 +31,10 @@ public class RobotSetup {
                 Subsystems.list("Example"), // can be constructed with strings(pascal case)
                 RobotConstID.YANG),
 
+        ChargedUp("Ammonia",
+                Subsystems.list(Subsystems.Swerve),
+                RobotConstID.YIN),
+
         TestBoard("testBoard(yin)", Subsystems.all(), RobotConstID.YIN),
 
         Simulation("simulation(yin)", Subsystems.all(), RobotConstID.YIN),
@@ -54,7 +58,9 @@ public class RobotSetup {
             "0306adf3", RobotID.TestBoard,
             "ffffffff", RobotID.Simulation,
             "aaaaaaaa", RobotID.RobotA,
-            "bbbbbbbb", RobotID.RobotB);
+            "bbbbbbbb", RobotID.RobotB,
+            "03260af0", RobotID.ChargedUp,
+            "03260abb", RobotID.ChargedUp);
 
     private static RobotID currentID = RobotID.Unlabeled;
 
@@ -63,6 +69,7 @@ public class RobotSetup {
             String currentSerialNum;
             if (RobotBase.isReal()) {
                 currentSerialNum = RobotController.getSerialNumber();
+                currentSerialNum = currentSerialNum.toLowerCase();
             } else {
                 currentSerialNum = "ffffffff";
             }

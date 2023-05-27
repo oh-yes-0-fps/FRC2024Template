@@ -6,7 +6,8 @@ package com.igknighters.subsystems;
 
 import com.igknighters.constants.ConstValues;
 import com.igknighters.subsystems.Resources.TestableSubsystem;
-import com.igknighters.util.hardware.McqTalonFX;
+import com.igknighters.util.hardware.HardwareUtil.ApiType;
+import com.igknighters.util.hardware.abstracts.MotorWrapper;
 import com.igknighters.util.logging.AutoLog.AL;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -21,7 +22,7 @@ public class Example extends SubsystemBase implements TestableSubsystem {
     private double randomDouble = 0.0;
 
     @AL.Shuffleboard
-    private McqTalonFX talon = new McqTalonFX(0, false);
+    private MotorWrapper talon = MotorWrapper.construct(ApiType.CTREv5, 0);
 
     /** Creates a new Example. */
     public Example() {

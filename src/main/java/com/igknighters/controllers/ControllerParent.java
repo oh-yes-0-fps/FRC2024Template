@@ -107,6 +107,7 @@ public class ControllerParent {
 
     protected TriggerBindingTuple A, B, X, Y, LB, RB, Back, Start, LS, RS, LT, RT, DPR, DPD, DPL, DPU;
 
+    /**for button idx (nice for sim) {@link edu.wpi.first.wpilibj.XboxController.Button} */
     public ControllerParent(int port, boolean makeController) {
         this.madeController = makeController;
         if (madeController) {

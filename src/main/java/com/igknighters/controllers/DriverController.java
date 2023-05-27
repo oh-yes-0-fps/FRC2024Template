@@ -1,7 +1,12 @@
 package com.igknighters.controllers;
 
+import com.igknighters.commands.AutoDrive;
 import com.igknighters.commands.ExampleCommands;
 import com.igknighters.subsystems.Resources.Subsystems;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 
 public class DriverController extends ControllerParent {
 
@@ -18,7 +23,12 @@ public class DriverController extends ControllerParent {
         //         Subsystems.list("Example", "Example2"), // example 2 doesnt exist so would never assign
         //         (trigger, allSS) -> trigger.onTrue(ExampleCommands.cmdDoThing(allSS.example.getSubsystem())));
 
-        // this.X.binding =
+        this.X.binding = new SingleDepBinding(
+                Subsystems.Swerve,
+                (trigger, allSS) -> trigger.onTrue(
+                    new AutoDrive(allSS.swerve.get(),
+                        new Pose2d(new Translation2d(13.3, 6.6), Rotation2d.fromDegrees(90d)))
+                ));
 
         // this.Y.binding =
 

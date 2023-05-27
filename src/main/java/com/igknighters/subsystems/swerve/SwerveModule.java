@@ -1,81 +1,85 @@
 package com.igknighters.subsystems.swerve;
 
+import com.igknighters.constants.ConstValues;
 import com.igknighters.constants.ConstValues.kSwerve;
-import com.igknighters.util.hardware.McqCanCoder;
-import com.igknighters.util.hardware.McqTalonFX;
-import com.igknighters.util.hardware.OptionalHardwareUtil.PositionUnit;
-import com.igknighters.util.hardware.OptionalHardwareUtil.VelocityUnit;
+import com.igknighters.util.hardware.HardwareUtil.ApiType;
+import com.igknighters.util.hardware.HardwareUtil.PositionUnit;
+import com.igknighters.util.hardware.HardwareUtil.VelocityUnit;
+import com.igknighters.util.hardware.abstracts.EncoderWrapper;
+import com.igknighters.util.hardware.abstracts.MotorWrapper;
+import com.igknighters.util.hardware.hardwareInterfaces.RotationalController.MotorNeutralMode;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 
-import com.ctre.phoenixpro.configs.CANcoderConfiguration;
-import com.ctre.phoenixpro.configs.TalonFXConfiguration;
-import com.ctre.phoenixpro.signals.AbsoluteSensorRangeValue;
-import com.ctre.phoenixpro.signals.NeutralModeValue;
-import com.ctre.phoenixpro.signals.SensorDirectionValue;
 
 public class SwerveModule implements Sendable {
 
-    private final McqCanCoder encoder;
-    private final McqTalonFX driveMotor;
-    private final McqTalonFX angleMotor;
+    private final EncoderWrapper encoder;
+    private final MotorWrapper driveMotor;
+    private final MotorWrapper angleMotor;
+
+    // simulation
+    private final FlywheelSim driveWheelSim = new FlywheelSim(
+            LinearSystemId.identifyVelocitySystem(
+                    kSwerve.DriveControllerConstants.kV * (kSwerve.WHEEL_DIAMETER * Math.PI) / (2 * Math.PI),
+                    kSwerve.DriveControllerConstants.kA * (kSwerve.WHEEL_DIAMETER * Math.PI) / (2 * Math.PI)),
+            DCMotor.getFalcon500(1), kSwerve.DRIVE_GEAR_RATIO);
+    private final FlywheelSim steeringSim = new FlywheelSim(
+            LinearSystemId.identifyVelocitySystem(
+                    kSwerve.AngleControllerConstants.kV, kSwerve.AngleControllerConstants.kA),
+            DCMotor.getFalcon500(1),
+            kSwerve.DRIVE_GEAR_RATIO);
 
     public SwerveModule(int encoderId, int driveMotorId, int angleMotorId, double encoderOffset) {
-        // all can be "hard-coded" enabled because this constructor is only called if
-        // swerve is active
-        // and all motors are needed for swerve
-        this.encoder = new McqCanCoder(encoderId, false);
-        this.driveMotor = new McqTalonFX(driveMotorId, false);
-        this.angleMotor = new McqTalonFX(angleMotorId, false);
+        this.encoder = EncoderWrapper.construct(ApiType.CTREPro, encoderId, kSwerve.CANIVORE_NAME);
+        this.driveMotor = MotorWrapper.construct(ApiType.CTREv5, driveMotorId, kSwerve.CANIVORE_NAME);
+        this.angleMotor = MotorWrapper.construct(ApiType.CTREv5, angleMotorId, kSwerve.CANIVORE_NAME);
 
-        this.encoder.ifSimThenEnable();
-        this.driveMotor.ifSimThenEnable();
-        this.angleMotor.ifSimThenEnable();
+        encoder.factoryReset().warnIfError();;
+        driveMotor.factoryReset().warnIfError();;
+        angleMotor.factoryReset().warnIfError();;
 
-        driveMotor.configurate((configerator) -> {
-            var config = new TalonFXConfiguration();
-            config.CurrentLimits.StatorCurrentLimitEnable = true;
-            config.CurrentLimits.StatorCurrentLimit = 40;
-            config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-            config.Voltage.PeakForwardVoltage = 12;
-            config.Voltage.PeakReverseVoltage = -12;
-            config.Slot0.kP = kSwerve.kP_Drive;
-            config.Slot0.kI = kSwerve.kI_Drive;
-            config.Slot0.kD = kSwerve.kD_Drive;
-            config.Slot0.kS = kSwerve.kS_Drive;
-            config.Slot0.kV = kSwerve.kV_Drive;
-            configerator.apply(config);
-        });
+        encoder.setOffset(PositionUnit.DEGREES, encoderOffset);
 
-        angleMotor.configurate((configerator) -> {
-            var config = new TalonFXConfiguration();
-            config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-            configerator.apply(config);
-        });
+        driveMotor.setNeutralMode(MotorNeutralMode.BRAKE);
+        angleMotor.setNeutralMode(MotorNeutralMode.BRAKE);
 
-        encoder.configurate((configerator) -> {
-            var config = new CANcoderConfiguration();
-            config.MagnetSensor.MagnetOffset = encoderOffset;
-            config.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Unsigned_0To1;
-            config.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-            configerator.apply(config);
-        });
+        driveMotor.setPID(
+                kSwerve.DriveControllerConstants.kP,
+                kSwerve.DriveControllerConstants.kI,
+                kSwerve.DriveControllerConstants.kD);
+        angleMotor.setPID(
+                kSwerve.AngleControllerConstants.kP,
+                kSwerve.AngleControllerConstants.kI,
+                kSwerve.AngleControllerConstants.kD);
+
+        driveMotor.setFFGains(
+                kSwerve.DriveControllerConstants.kS,
+                kSwerve.DriveControllerConstants.kV);
+        angleMotor.setFFGains(
+                kSwerve.AngleControllerConstants.kS,
+                kSwerve.AngleControllerConstants.kV);
     }
 
     public void seedModule() {
-        var canCoderPosResult = encoder.getPosition(PositionUnit.REVOLUTIONS);
+        var canCoderPosResult = encoder.getPosition(PositionUnit.ROTATIONS);
         angleMotor.setSensorPosition(
-                PositionUnit.REVOLUTIONS,
+                PositionUnit.ROTATIONS,
                 canCoderPosResult.getValueThrow() * kSwerve.ANGLE_GEAR_RATIO);
     }
 
     public void setState(SwerveModuleState state) {
         var optimizedState = SwerveModuleState.optimize(state, getAngle());
-        setAngle(optimizedState.angle);
+        // setAngle(optimizedState.angle);
+        setAngle(new Rotation2d());
         setVelocityMps(optimizedState.speedMetersPerSecond);
     }
 
@@ -84,7 +88,7 @@ public class SwerveModule implements Sendable {
     }
 
     public SwerveModulePosition getPosition() {
-        double driveRotations = driveMotor.getPosition(PositionUnit.REVOLUTIONS).getValueThrow();
+        double driveRotations = driveMotor.getPosition(PositionUnit.ROTATIONS).getValueThrow();
         double distance = (driveRotations / kSwerve.DRIVE_GEAR_RATIO) * (kSwerve.WHEEL_DIAMETER * Math.PI);
         Rotation2d angle = getAngle();
         return new SwerveModulePosition(distance, angle);
@@ -105,12 +109,12 @@ public class SwerveModule implements Sendable {
         double wheelCircumference = Math.PI * kSwerve.WHEEL_DIAMETER;
         double driveGearRatio = kSwerve.DRIVE_GEAR_RATIO;
         double motorRps = speedMps / (wheelCircumference * driveGearRatio);
-        driveMotor.setVelocity(VelocityUnit.RPS, motorRps, kSwerve.kF_Drive);
+        driveMotor.setVelocity(VelocityUnit.RPS, motorRps);
     }
 
     private void setAngle(Rotation2d angle) {
         double revolutions = (angle.getDegrees() * kSwerve.ANGLE_GEAR_RATIO) / 360.0;
-        angleMotor.setPosition(PositionUnit.REVOLUTIONS, revolutions);
+        angleMotor.setPosition(PositionUnit.ROTATIONS, revolutions);
     }
 
     @Override
@@ -119,6 +123,37 @@ public class SwerveModule implements Sendable {
     }
 
     public void simulationPeriodic() {
-        
+        double driveVoltage = driveMotor.getSimRotorVoltage();
+        if (driveVoltage >= 0)
+            driveVoltage = Math.max(0, driveVoltage - kSwerve.DriveControllerConstants.kS);
+        else
+            driveVoltage = Math.min(0, driveVoltage + kSwerve.DriveControllerConstants.kS);
+        driveWheelSim.setInputVoltage(driveVoltage);
+
+        double steerVoltage = angleMotor.getSimRotorVoltage();
+        if (steerVoltage >= 0)
+            steerVoltage = Math.max(0, steerVoltage - kSwerve.AngleControllerConstants.kS);
+        else
+            steerVoltage = Math.min(0, steerVoltage + kSwerve.AngleControllerConstants.kS);
+        steeringSim.setInputVoltage(steerVoltage);
+
+        driveWheelSim.update(0.02);
+        steeringSim.update(0.02);
+
+        // update our simulated devices with our simulated physics results
+        double driveVelocityRps = (driveWheelSim.getAngularVelocityRPM() / 60) * kSwerve.DRIVE_GEAR_RATIO;
+        driveMotor.setSimRotorVelocity(VelocityUnit.RPS, driveVelocityRps);
+        driveMotor.addSimRotorPosition(PositionUnit.ROTATIONS, driveVelocityRps * ConstValues.PERIODIC_TIME);
+
+        double angleVelocityRps = (steeringSim.getAngularVelocityRPM() / 60) * kSwerve.ANGLE_GEAR_RATIO;
+        angleMotor.setSimRotorVelocity(VelocityUnit.RPS, angleVelocityRps);
+        angleMotor.addSimRotorPosition(PositionUnit.ROTATIONS, angleVelocityRps * ConstValues.PERIODIC_TIME);
+
+        encoder.setSimRotorVelocity(VelocityUnit.RPS, angleVelocityRps);
+        encoder.setSimRotorPosition(PositionUnit.ROTATIONS, getAngle().getRotations());
+
+        driveMotor.setSimSupplyVoltage(RobotController.getBatteryVoltage());
+        angleMotor.setSimSupplyVoltage(RobotController.getBatteryVoltage());
+        encoder.setSimSupplyVoltage(RobotController.getBatteryVoltage());
     }
 }

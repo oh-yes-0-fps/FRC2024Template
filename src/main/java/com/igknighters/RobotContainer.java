@@ -24,12 +24,13 @@ public class RobotContainer {
 
     public static void robotStartup() {
         DriverStation.silenceJoystickConnectionWarning(ConstValues.DEBUG);
+        Pathing.loadZones();
+        Pathing.loadZonePaths();
+        LogInit.init();
+
         driverController.assignButtons(allSubsystems);
         operatorController.assignButtons(allSubsystems);
         testingController.assignButtons(allSubsystems);
-        LogInit.init();
-        Pathing.loadZones();
-        Pathing.loadZonePaths();
     }
 
     /// INITIALIZATION

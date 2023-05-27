@@ -587,7 +587,6 @@ public class Pathing {
                     waypointsEndDist.ceilingKey(distFromEnd) + 0.1).getValue();
             // if the two waypoints are the same, return that waypoint
             if (waypointIdx == waypointIdx2) {
-                System.out.println("same");
                 return getWaypointFromIdx(waypointIdx + 1);
             }
             // if the two waypoints are not the same, return the one that is on the left

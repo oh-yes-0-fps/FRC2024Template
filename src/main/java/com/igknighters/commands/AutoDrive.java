@@ -22,11 +22,12 @@ public class AutoDrive extends CommandBase {
         asyncThread = new Thread(() -> {
             setPath(Pathing.generatePath(start, end));
         });
+        asyncThread.setName("AutoDrive Pathgen Thread");
         asyncThread.start();
     }
 
     public AutoDrive(Swerve swerve, Pose2d end) {
-        this(swerve, swerve.getCurrentPose(), end);
+        this(swerve, swerve.getPose(), end);
     }
 
     private synchronized void setPath(FullPath path) {
@@ -35,7 +36,6 @@ public class AutoDrive extends CommandBase {
         hasPath = true;
     }
 
-    // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
         if (!hasPath) {
@@ -46,7 +46,8 @@ public class AutoDrive extends CommandBase {
             firstExecute = false;
         }
 
-        var waypoint = path.getWaypoint(swerve.getCurrentPose());
+        var currPose = swerve.getPose();
+        var waypoint = path.getWaypoint(currPose);
         swerve.pursueWaypoint(waypoint);
     }
 
@@ -59,5 +60,10 @@ public class AutoDrive extends CommandBase {
         if (!interrupted) {
             swerve.stop();
         }
+    }
+
+    @Override
+    public boolean isFinished() {
+        return false;
     }
 }

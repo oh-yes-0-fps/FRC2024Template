@@ -2,6 +2,7 @@ package com.igknighters.constants;
 
 import com.igknighters.constants.ConstantHelper.*;
 
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.util.Units;
 
 //this will be where we put references to all our initialized values
@@ -21,6 +22,9 @@ public class ConstValues {
     public static final boolean DEBUG = true; // this should be false for competition
     @NTIgnore
     public static final double PERIODIC_TIME = 0.02; // 20ms
+
+    @NTIgnore
+    public static double DEFAULT_DEADBAND = 0.15;
 
     public static class kExample {
 
@@ -54,6 +58,9 @@ public class ConstValues {
 
             public static final double ANGLE = 150d / 7d;
         }
+
+        @NTIgnore
+        public static final AprilTagFields APRIL_TAG_FIELD = AprilTagFields.k2023ChargedUp;
 
         public static boolean PREFER_X_ORIENTED_PATHS = true;
 

@@ -16,11 +16,11 @@ public class RobotContainer {
     static {
         ConstantHelper.applyRoboConst(ConstValues.class);
     }
-    private static final AllSubsystems allSubsystems = new AllSubsystems(RobotSetup.getRobotID().subsystems);
-
     private static final DriverController driverController = new DriverController(0);
     private static final OperatorController operatorController = new OperatorController(1);
     private static final TestingController testingController = new TestingController(3);
+
+    private static final AllSubsystems allSubsystems = new AllSubsystems(RobotSetup.getRobotID().subsystems);
 
     public static void robotStartup() {
         DriverStation.silenceJoystickConnectionWarning(ConstValues.DEBUG);
@@ -31,6 +31,7 @@ public class RobotContainer {
         driverController.assignButtons(allSubsystems);
         operatorController.assignButtons(allSubsystems);
         testingController.assignButtons(allSubsystems);
+
     }
 
     /// INITIALIZATION

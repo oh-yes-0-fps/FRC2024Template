@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,8 +58,10 @@ public class Pathing {
                 waypoints[j] = binary[i + 3 + j];
             }
             // add path to paths
-            if (!zonePaths.containsKey(startId))
+            if (!zonePaths.containsKey(startId)) {
                 zonePaths.put(startId, new ConcurrentHashMap<>());
+                zonePaths.get(startId).put(startId, new ZonePathSeg(List.of(), startId, startId));
+            }
             zonePaths.get(startId).put(endId, new ZonePathSeg(waypoints, startId, endId));
             // update bytes used
             bytesUsed = 3 + waypoints.length;
@@ -129,15 +132,13 @@ public class Pathing {
         private static double maxShort = Short.MAX_VALUE;
         private Translation2d translation;
         private Rotation2d rotation;
-        private double speedPercentage;
-        private double speed;
+        private double speedPercent;
         private double distFromStart = 0.0;
 
-        public Waypoint(Translation2d pose, Rotation2d rotation, double speed) {
-            this.translation = pose;
+        public Waypoint(Translation2d point, Rotation2d rotation, double speedPercentage) {
+            this.translation = point;
             this.rotation = rotation;
-            this.speedPercentage = 1.0;
-            this.speed = speed;
+            this.speedPercent = speedPercentage;
         }
 
         public Waypoint(byte[] bytes) {
@@ -145,17 +146,17 @@ public class Pathing {
                 throw new IllegalArgumentException("Waypoint must be " + waypointSize + " bytes");
             }
             // decode first 4 bytes into float
-            float x = ByteBuffer.wrap(new byte[] { bytes[0], bytes[1], bytes[2], bytes[3] }).getFloat();
+            float x = ByteBuffer.wrap(new byte[] { bytes[7], bytes[6], bytes[5], bytes[4] }).getFloat();
             // decode next 4 bytes into float
-            float y = ByteBuffer.wrap(new byte[] { bytes[4], bytes[5], bytes[6], bytes[7] }).getFloat();
+            float y = ByteBuffer.wrap(new byte[] { bytes[3], bytes[2], bytes[1], bytes[0] }).getFloat();
             // decode last 2 bytes into short
-            short speedPercent = ByteBuffer.wrap(new byte[] { bytes[8], bytes[9] }).getShort();
+            short speedPercentShort = ByteBuffer.wrap(new byte[] { bytes[8], bytes[9] }).getShort();
             this.translation = new Translation2d(
                     (double) y,
                     (double) x);
             this.rotation = new Rotation2d((int) bytes[6]);
-            this.speed = kSwerve.MAX_DRIVE_VELOCITY;
-            this.speedPercentage = (double) speedPercent / maxShort;
+            this.speedPercent = (double) speedPercentShort / maxShort;
+            this.speedPercent = 1.0;
         }
 
         public Translation2d getTranslation() {
@@ -166,12 +167,8 @@ public class Pathing {
             return rotation;
         }
 
-        public double getSpeed() {
-            return speed;
-        }
-
-        public double getAdjSpeed() {
-            return speed * speedPercentage;
+        public double getSpeedPercent() {
+            return speedPercent;
         }
 
         public double getDistFromStart() {
@@ -186,8 +183,8 @@ public class Pathing {
             this.rotation = rotation;
         }
 
-        public void setSpeed(double speed) {
-            this.speed = speed;
+        public void setSpeedPercent(double speedPercent) {
+            this.speedPercent = speedPercent;
         }
 
         public void setDistFromStart(double distFromStart) {
@@ -329,7 +326,7 @@ public class Pathing {
         public ZonePathSeg clone() {
             List<Waypoint> newWaypoints = new ArrayList<>();
             for (Waypoint waypoint : waypoints) {
-                newWaypoints.add(new Waypoint(waypoint.getTranslation(), waypoint.getRotation(), waypoint.getSpeed()));
+                newWaypoints.add(new Waypoint(waypoint.getTranslation(), waypoint.getRotation(), waypoint.getSpeedPercent()));
             }
             return new ZonePathSeg(newWaypoints, startZoneId, endZoneId);
         }
@@ -346,7 +343,7 @@ public class Pathing {
                 if (i > 1.0) {
                     i = 1.0;
                 }
-                waypoints.add(new Waypoint(start.interpolate(end, i), new Rotation2d(), 0.0));
+                waypoints.add(new Waypoint(start.interpolate(end, i), new Rotation2d(), 1.0));
             }
         }
 
@@ -383,7 +380,7 @@ public class Pathing {
         public StraightPathSeg clone() {
             List<Waypoint> newWaypoints = new ArrayList<>();
             for (Waypoint waypoint : waypoints) {
-                newWaypoints.add(new Waypoint(waypoint.getTranslation(), waypoint.getRotation(), waypoint.getSpeed()));
+                newWaypoints.add(new Waypoint(waypoint.getTranslation(), waypoint.getRotation(), waypoint.getSpeedPercent()));
             }
             return new StraightPathSeg(newWaypoints.get(0).getTranslation(),
                     newWaypoints.get(newWaypoints.size() - 1).getTranslation());
@@ -454,6 +451,7 @@ public class Pathing {
 
         private final Translation2d startPoint;
         private final Translation2d endPoint;
+        private final double pathAngleDegrees;
 
         // maps to help figure out which waypoint to pursue next
         private final NavigableMap<Double, Integer> waypointsX = new TreeMap<>();
@@ -462,6 +460,10 @@ public class Pathing {
         private final NavigableMap<Double, Integer> waypointsEndDist = new TreeMap<>();
         private final Set<Integer> leftWaypoints = new HashSet<>();
         private final WaypointFindingMode mode;
+        private final Boolean goingEast;
+        private final Boolean goingNorth;
+
+        private final List<Pose2d> poses = new ArrayList<>();
 
         public FullPath(List<WaypointContainer> subPaths, Rotation2d startRot, Rotation2d endRot) {
             this.subPaths = subPaths;
@@ -478,16 +480,20 @@ public class Pathing {
                 totalDist += subPath.getDist();
             }
             this.dist = totalDist;
+            this.startPoint = waypointList.get(0).getTranslation();
+            this.endPoint = waypointList.get(waypointList.size() - 1).getTranslation();
+            this.pathAngleDegrees = Math.toDegrees(
+                Math.atan2(endPoint.getY() - startPoint.getY(), endPoint.getX() - startPoint.getX()));
+            this.goingEast = endPoint.getX() > startPoint.getX();
+            this.goingNorth = endPoint.getY() > startPoint.getY();
 
             // loop variables
             double turnBy = totalDist * 0.9;
             double distFromStart = 0.0;
-            double lastX = 0.0;
-            double lastY = 0.0;
+            double lastX = goingEast ? 0.0 : 100.0;
+            double lastY = goingNorth ? 0.0 : 100.0;
             boolean xOrientedViable = true;
             boolean yOrientedViable = true;
-            this.startPoint = waypointList.get(0).getTranslation();
-            this.endPoint = waypointList.get(waypointList.size() - 1).getTranslation();
             int waypointIdx = 0;
             // start loop
             for (Waypoint waypoint : waypointList) {
@@ -499,10 +505,10 @@ public class Pathing {
                 waypointsY.put(currTranslation.getY(), waypointIdx);
 
                 // path orientation check
-                if (currTranslation.getX() <= lastX) {
+                if ((currTranslation.getX() < lastX) == goingEast) {
                     xOrientedViable = false;
                 }
-                if (currTranslation.getY() <= lastY) {
+                if ((currTranslation.getY() < lastY) == goingNorth) {
                     yOrientedViable = false;
                 }
                 lastX = currTranslation.getX();
@@ -515,9 +521,10 @@ public class Pathing {
 
                 // set rotation setpoint
                 double turnByPercent = (distFromStart) / turnBy;
-                waypoint.setRotation(startRot.interpolate(endRot, turnByPercent));
-                // set speed setpoint
-                waypoint.setSpeed(kSwerve.MAX_DRIVE_VELOCITY);
+                var rot = startRot.interpolate(endRot, turnByPercent);
+                waypoint.setRotation(rot);
+
+                poses.add(new Pose2d(currTranslation, rot));
 
                 waypointIdx++;
             }
@@ -545,10 +552,16 @@ public class Pathing {
             return dist;
         }
 
-        private boolean isLeft(Translation2d testPoint) {
-            return !(testPoint.getX() * (endPoint.getY() - startPoint.getY())
-                    + testPoint.getY() * (startPoint.getX() - endPoint.getX())
-                    + (startPoint.getY() * endPoint.getX() - startPoint.getX() * endPoint.getY()) > 0);
+        public List<Pose2d> getPoses() {
+            return poses;
+        }
+
+        private boolean isLeft(Translation2d test) {
+            var start = startPoint;
+            double testAngleDegrees = Math.toDegrees(Math.atan2(test.getY() - start.getY(), test.getX() - start.getX()));
+            double startToEndAngleDegrees = this.pathAngleDegrees;
+            //if testAngleDegrees is above startToEndAngleDegrees, then test is on the left
+            return testAngleDegrees > startToEndAngleDegrees;
         }
 
         private Waypoint getWaypointFromIdx(int idx) {
@@ -563,15 +576,21 @@ public class Pathing {
         private Waypoint getWaypointXOriented(Pose2d currPose) {
             double x = currPose.getTranslation().getX();
             // get the value of the entry after the closest entry above x
-            var waypointIdx = waypointsX.ceilingEntry(x).getValue();
-            return getWaypointFromIdx(waypointIdx + 1);
+            var entry = waypointsX.ceilingEntry(x);
+            if (entry == null) {
+                return getWaypointFromIdx(waypointList.size() - 1);
+            }
+            return getWaypointFromIdx(entry.getValue() + 1);
         }
 
         private Waypoint getWaypointYOriented(Pose2d currPose) {
             double y = currPose.getTranslation().getY();
             // get the value of the entry after the closest entry above y
-            var waypointIdx = waypointsY.ceilingEntry(y).getValue();
-            return getWaypointFromIdx(waypointIdx + 1);
+            var entry = waypointsY.ceilingEntry(y);
+            if (entry == null) {
+                return getWaypointFromIdx(waypointList.size() - 1);
+            }
+            return getWaypointFromIdx(entry.getValue() + 1);
         }
 
         public Waypoint getWaypointTriangulated(Pose2d currPose) {
@@ -579,12 +598,15 @@ public class Pathing {
             Translation2d currTranslation = currPose.getTranslation();
             double distFromStart = currTranslation.getDistance(startPoint);
             double distFromEnd = currTranslation.getDistance(endPoint);
-            // get the value of the entry after the closest entry above distFromStart
-            var waypointIdx = waypointsStartDist.ceilingEntry(
-                    waypointsStartDist.ceilingKey(distFromStart) + 0.1).getValue();
-            // get the value of the entry after the closest entry above distFromEnd
-            var waypointIdx2 = waypointsEndDist.ceilingEntry(
-                    waypointsEndDist.ceilingKey(distFromEnd) + 0.1).getValue();
+            var entry = waypointsStartDist.ceilingEntry(distFromStart);
+            var entry2 = waypointsEndDist.ceilingEntry(distFromEnd);
+            if (entry == null) {
+                return getWaypointFromIdx(waypointList.size() - 1);
+            } else if (entry2 == null) {
+                return getWaypointFromIdx(1);
+            }
+            int waypointIdx = entry.getValue();
+            int waypointIdx2 = entry2.getValue();
             // if the two waypoints are the same, return that waypoint
             if (waypointIdx == waypointIdx2) {
                 return getWaypointFromIdx(waypointIdx + 1);
@@ -617,6 +639,21 @@ public class Pathing {
                     }
                 }
             }
+            //if a waypoint is not found, return the closest waypoint
+            double closestDist = Double.MAX_VALUE;
+            int closestIdx = -1;
+            for (int i = 0; i < waypointList.size(); i++) {
+                var waypoint = waypointList.get(i);
+                var dist = waypoint.getTranslation().getDistance(currTranslation);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestIdx = i;
+                }
+            }
+            if (closestIdx != -1) {
+                return waypointList.get(closestIdx);
+            }
+            //if all else fails, return null, this will blow up code
             return null;
         }
 
@@ -640,23 +677,27 @@ public class Pathing {
         return null;
     }
 
-    public static synchronized FullPath generatePath(Pose2d start, Pose2d end) {
+    public static synchronized Optional<FullPath> generatePath(Pose2d start, Pose2d end) {
         Zone startZone = getEncapsulatingZone(start.getTranslation());
         Zone endZone = getEncapsulatingZone(end.getTranslation());
+        if (startZone == endZone) {
+            return Optional.of(new FullPath(List.of(new StraightPathSeg(start.getTranslation(), end.getTranslation())),
+                    start.getRotation(), end.getRotation()));
+        }
         if (startZone == null || endZone == null) {
-            return null;
+            return Optional.empty();
         }
         var zonePathMap = zonePaths.get(startZone.getId());
         if (zonePathMap == null) {
-            return null;
+            return Optional.empty();
         }
         ZonePathSeg zonePathSeg = zonePathMap.get(endZone.getId());
         if (zonePathSeg == null) {
-            return null;
+            return Optional.empty();
         }
         StraightPathSeg head = new StraightPathSeg(start.getTranslation(), zonePathSeg.getStart());
         StraightPathSeg tail = new StraightPathSeg(zonePathSeg.getEnd(), end.getTranslation());
         List<WaypointContainer> subPaths = List.of(head, zonePathSeg, tail);
-        return new FullPath(subPaths, start.getRotation(), end.getRotation());
+        return Optional.of(new FullPath(subPaths, start.getRotation(), end.getRotation()));
     }
 }

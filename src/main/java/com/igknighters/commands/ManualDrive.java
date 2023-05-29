@@ -1,28 +1,36 @@
 package com.igknighters.commands;
 
+import java.util.function.DoubleSupplier;
+
+import com.igknighters.controllers.DriverController;
+import com.igknighters.subsystems.swerve.Swerve;
+
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class ManualDrive extends CommandBase {
-  /** Creates a new ManualDrive. */
-  public ManualDrive() {
-    // Use addRequirements() here to declare subsystem dependencies.
-  }
 
-  // Called when the command is initially scheduled.
-  @Override
-  public void initialize() {}
+    private final DoubleSupplier strafeSupplier;
+    private final DoubleSupplier forwardSupplier;
+    private final DoubleSupplier rotationSupplier;
+    private final Swerve swerve;
 
-  // Called every time the scheduler runs while the command is scheduled.
-  @Override
-  public void execute() {}
+    public ManualDrive(Swerve swerve, DriverController driverController) {
+        addRequirements(swerve);
+        strafeSupplier = driverController.leftStickX(0.15);
+        forwardSupplier = driverController.leftStickY(0.15);
+        rotationSupplier = driverController.rightStickX(0.15);
+        this.swerve = swerve;
+    }
 
-  // Called once the command ends or is interrupted.
-  @Override
-  public void end(boolean interrupted) {}
+    @Override
+    public void execute() {
+        var normalizedTranslation = new Translation2d(
+            forwardSupplier.getAsDouble(),
+            strafeSupplier.getAsDouble()
+        );
+        var rotation = rotationSupplier.getAsDouble();
+        swerve.pursueDriverInput(normalizedTranslation, rotation);
+    }
 
-  // Returns true when the command should end.
-  @Override
-  public boolean isFinished() {
-    return false;
-  }
 }

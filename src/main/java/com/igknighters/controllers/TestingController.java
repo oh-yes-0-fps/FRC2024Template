@@ -7,7 +7,7 @@ import com.igknighters.subsystems.Resources.Subsystems;
 /**If debug is false this controller does not initialize */
 public class TestingController extends ControllerParent {
     public TestingController(int port) {
-        super(port, ConstValues.DEBUG);
+        super(port, ConstValues.DEBUG, ControllerType.Testing);
 
         // disregard null safety as it is checked on assignment
 

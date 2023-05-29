@@ -29,10 +29,26 @@ public class ConstantHelper {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.FIELD })
+    public @interface IntArrayConst {
+        int[] yin();
+
+        int[] yang();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD })
     public @interface DoubleConst {
         double yin();
 
         double yang();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD })
+    public @interface DoubleArrayConst {
+        double[] yin();
+
+        double[] yang();
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -45,10 +61,26 @@ public class ConstantHelper {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.FIELD })
+    public @interface StringArrayConst {
+        String[] yin();
+
+        String[] yang();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD })
     public @interface BooleanConst {
         boolean yin();
 
         boolean yang();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD })
+    public @interface BooleanArrayConst {
+        boolean[] yin();
+
+        boolean[] yang();
     }
 
     /**
@@ -119,6 +151,54 @@ public class ConstantHelper {
                     field.set(obj, annotation.yang());
                 }
                 // entry.setBoolean((boolean) field.get(consts));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        } else if (field.isAnnotationPresent(IntArrayConst.class)){
+            try {
+                IntArrayConst annotation = field.getAnnotation(IntArrayConst.class);
+                if (constID == RobotConstID.YIN) {
+                    field.set(obj, annotation.yin());
+                } else if (constID == RobotConstID.YANG) {
+                    field.set(obj, annotation.yang());
+                }
+                // entry.setDoubleArray((double[]) field.get(consts));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        } else if (field.isAnnotationPresent(DoubleArrayConst.class)){
+            try {
+                DoubleArrayConst annotation = field.getAnnotation(DoubleArrayConst.class);
+                if (constID == RobotConstID.YIN) {
+                    field.set(obj, annotation.yin());
+                } else if (constID == RobotConstID.YANG) {
+                    field.set(obj, annotation.yang());
+                }
+                // entry.setDoubleArray((double[]) field.get(consts));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        } else if (field.isAnnotationPresent(StringArrayConst.class)){
+            try {
+                StringArrayConst annotation = field.getAnnotation(StringArrayConst.class);
+                if (constID == RobotConstID.YIN) {
+                    field.set(obj, annotation.yin());
+                } else if (constID == RobotConstID.YANG) {
+                    field.set(obj, annotation.yang());
+                }
+                // entry.setStringArray((String[]) field.get(consts));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        } else if (field.isAnnotationPresent(BooleanArrayConst.class)){
+            try {
+                BooleanArrayConst annotation = field.getAnnotation(BooleanArrayConst.class);
+                if (constID == RobotConstID.YIN) {
+                    field.set(obj, annotation.yin());
+                } else if (constID == RobotConstID.YANG) {
+                    field.set(obj, annotation.yang());
+                }
+                // entry.setBooleanArray((boolean[]) field.get(consts));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }

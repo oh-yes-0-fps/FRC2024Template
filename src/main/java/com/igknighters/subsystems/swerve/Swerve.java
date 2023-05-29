@@ -3,20 +3,29 @@ package com.igknighters.subsystems.swerve;
 
 import com.igknighters.constants.ConstValues.kSwerve.kFrontLeft;
 import com.igknighters.constants.ConstValues.kSwerve.kFrontRight;
+import com.igknighters.controllers.ControllerParent;
+import com.igknighters.controllers.DriverController;
+import com.igknighters.controllers.ControllerParent.ControllerType;
 import com.ctre.phoenixpro.hardware.Pigeon2;
 import com.ctre.phoenixpro.sim.Pigeon2SimState;
+import com.igknighters.Robot;
+import com.igknighters.commands.ManualDrive;
 import com.igknighters.constants.ConstValues;
+import com.igknighters.constants.RobotSetup;
 import com.igknighters.constants.ConstValues.kSwerve;
 import com.igknighters.constants.ConstValues.kSwerve.kBackLeft;
 import com.igknighters.constants.ConstValues.kSwerve.kBackRight;
 import com.igknighters.subsystems.Resources.TestableSubsystem;
 import com.igknighters.subsystems.swerve.Pathing.Waypoint;
 import com.igknighters.util.logging.AutoLog.AL.Shuffleboard;
+import com.igknighters.util.vision.DefinedRobotCameras;
+import com.igknighters.util.vision.VisionPoseEstimator;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -25,9 +34,12 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Swerve extends SubsystemBase implements TestableSubsystem {
+
     // perspective is from looking at the front of the robot
     private final SwerveModule frontLeftModule;
     private final SwerveModule frontRightModule;
@@ -47,9 +59,11 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
             });
 
     private final SwerveDrivePoseEstimator poseEstimator;
+    private final VisionPoseEstimator visionEstimator;
 
     @Shuffleboard
     private final Field2d field = new Field2d();
+    private final FieldObject2d setPoint = field.getObject("Waypoint");
 
     private final Pigeon2 pigeon;
     private final Pigeon2SimState pigeonSim;
@@ -83,6 +97,16 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
                 VecBuilder.fill(0.1, 0.1, 1));
         lastPose = poseEstimator.getEstimatedPosition();
 
+        visionEstimator = new VisionPoseEstimator(kSwerve.APRIL_TAG_FIELD, 
+            DefinedRobotCameras.getCameras(RobotSetup.getRobotID()));
+
+        var driveController = ControllerParent.getController(ControllerType.Driver);
+        if (driveController.isPresent()) {
+            this.setDefaultCommand(
+                new ManualDrive(this, (DriverController) driveController.get())
+            );
+        }
+
         Timer.delay(1);
         seedAllModules();
     }
@@ -102,40 +126,60 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
         return lastPose;
     }
 
-    public Pose2d generateOffsetSetPoint(Translation2d normTrans, double normRot) {
-        double timeBetweenPoses = ConstValues.PERIODIC_TIME;
-        var currPos = getPose();
-        var maxDriveMps = kSwerve.MAX_DRIVE_VELOCITY;
-        var maxTurnRadps = kSwerve.MAX_TURN_VELOCITY;
-        return new Pose2d(new Translation2d(
-                normTrans.getX() * (maxDriveMps * timeBetweenPoses),
-                normTrans.getY() * (maxDriveMps * timeBetweenPoses))
-                .plus(currPos.getTranslation()),
-                new Rotation2d(normRot * (maxTurnRadps * timeBetweenPoses))
-                        .plus(currPos.getRotation()));
+    public Field2d getField() {
+        return field;
+    }
+
+    public void pursueDriverInput(Translation2d normTrans, double normRot) {
+        var rotationSetpoint = pigeon.getRotation2d().plus(
+                new Rotation2d(normRot * kSwerve.MAX_TURN_VELOCITY * ConstValues.PERIODIC_TIME));
+        var pose = new Pose2d(normTrans, rotationSetpoint);
+        pursuePose(pose);
     }
 
     public void pursueWaypoint(Waypoint waypoint) {
+        setPoint.setPose(new Pose2d(waypoint.getTranslation(),
+                waypoint.getRotation()));
+        pursuePose(poseFromWaypoint(waypoint));
+    }
+
+    private Pose2d poseFromWaypoint(Waypoint waypoint) {
+        Pose2d currPose = this.getPose();
+        Translation2d translation = waypoint.getTranslation().minus(currPose.getTranslation());
+        // normalize translation
+        translation = translation.times(1 / translation.getNorm());
+        translation = translation.times(waypoint.getSpeedPercent());
+        return new Pose2d(translation, waypoint.getRotation());
+    }
+
+    private void pursuePose(Pose2d pose) {
         // current data
         Pose2d currPos = getPose();
-        // waypoint data
-        double speed = waypoint.getAdjSpeed();
-        Rotation2d rot = waypoint.getRotation();
-        Translation2d location = waypoint.getTranslation();
         // calculate the velocity of the robot
-        Translation2d offset = location.minus(currPos.getTranslation());
-        double xVeloc = speed * (offset.getX() / offset.getNorm());
-        double yVeloc = speed * (offset.getY() / offset.getNorm());
+        double xVeloc = kSwerve.MAX_DRIVE_VELOCITY * pose.getX();
+        double yVeloc = kSwerve.MAX_DRIVE_VELOCITY * pose.getY();
         // calculate the rotation of the robot
-        double rVeloc = rot.minus(currPos.getRotation()).getRadians()
-                * (kSwerve.MAX_TURN_VELOCITY * ConstValues.PERIODIC_TIME);
+        double rVeloc = pose.getRotation().minus(currPos.getRotation())
+                .getRadians() * (kSwerve.MAX_TURN_VELOCITY * ConstValues.PERIODIC_TIME);
         // calculate the module states
         var chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xVeloc, yVeloc,
-            rVeloc, currPos.getRotation());
+                rVeloc, currPos.getRotation());
+        updateSimPose(chassisSpeeds);
         var moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds);
-        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, speed);
+        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, kSwerve.MAX_DRIVE_VELOCITY);
         // set the module states
         setModuleStates(moduleStates);
+    }
+
+    private void updateSimPose(ChassisSpeeds chassisSpeeds) {
+        if (Robot.isReal()) {
+            return;
+        }
+        double deltaX = chassisSpeeds.vxMetersPerSecond * ConstValues.PERIODIC_TIME;
+        double deltaY = chassisSpeeds.vyMetersPerSecond * ConstValues.PERIODIC_TIME;
+        double deltaTheta = chassisSpeeds.omegaRadiansPerSecond * ConstValues.PERIODIC_TIME;
+        lastPose = lastPose.plus(new Transform2d(new Translation2d(deltaX, deltaY),
+                new Rotation2d(deltaTheta)));
     }
 
     public void setModuleStates(SwerveModuleState[] moduleStates) {
@@ -145,7 +189,11 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
     }
 
     public void stop() {
-        setModuleStates(new SwerveModuleState[4]);
+        var states = getModuleStates();
+        for (int i = 0; i < states.length; i++) {
+            states[i].speedMetersPerSecond = 0;
+        }
+        setModuleStates(states);
     }
 
     public SwerveModulePosition[] getModulePositions() {
@@ -166,8 +214,24 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
 
     @Override
     public void periodic() {
-        lastPose = poseEstimator.update(pigeon.getRotation2d(), getModulePositions());
+        if (Robot.isReal()) {
+            for (var estRoboPose : visionEstimator.estimateCurrentPosition()) {
+                poseEstimator.addVisionMeasurement(estRoboPose.estimatedPose.toPose2d(),
+                    estRoboPose.timestampSeconds);
+            }
+            lastPose = poseEstimator.update(pigeon.getRotation2d(), getModulePositions());
+        }
         field.setRobotPose(getPose());
+
+        var optDriveController = ControllerParent.getController(ControllerType.Driver);
+        if (optDriveController.isPresent() && this.getCurrentCommand() != this.getDefaultCommand()) {
+            var driver = optDriveController.get();
+            if (driver.rightStickX(0.15).getAsDouble() != 0.0
+                || driver.leftStickY(0.15).getAsDouble() != 0.0
+                || driver.leftStickX(0.15).getAsDouble() != 0.0) {
+                    CommandScheduler.getInstance().cancel(this.getCurrentCommand());
+            }
+        }
     }
 
     double yaw = 0;
@@ -179,9 +243,10 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
         }
         pigeonSim.setSupplyVoltage(RobotController.getBatteryVoltage());
 
-        double chassisOmega = kinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond;
-        chassisOmega = Math.toDegrees(chassisOmega) * ConstValues.PERIODIC_TIME;
-        yaw += chassisOmega;
-        pigeonSim.setRawYaw(yaw);
+        // double chassisOmega =
+        // kinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond;
+        // chassisOmega = Math.toDegrees(chassisOmega) * ConstValues.PERIODIC_TIME;
+        // yaw += chassisOmega;
+        // pigeonSim.setRawYaw(yaw % 360d);
     }
 }

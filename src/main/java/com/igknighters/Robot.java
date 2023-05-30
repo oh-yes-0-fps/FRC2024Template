@@ -6,8 +6,8 @@ package com.igknighters;
 
 import com.igknighters.util.UtilPeriodic;
 import com.igknighters.util.logging.BootupLogger;
+import com.igknighters.util.logging.LogInit;
 
-import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -26,7 +26,7 @@ public class Robot extends TimedRobot {
 
     public Robot() {
         super();
-        DataLogManager.getLog();
+        LogInit.init();
         BootupLogger.BootupLog("Robot Constructed");
     }
 

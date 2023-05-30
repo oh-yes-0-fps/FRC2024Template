@@ -75,7 +75,7 @@ public class LogInit {
     }
 
     public static void init() {
-        initNetworkTables();
         initDataLogger();
+        initNetworkTables();
     }
 }

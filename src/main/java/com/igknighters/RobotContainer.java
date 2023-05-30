@@ -8,7 +8,6 @@ import com.igknighters.controllers.OperatorController;
 import com.igknighters.controllers.TestingController;
 import com.igknighters.subsystems.Resources.AllSubsystems;
 import com.igknighters.subsystems.swerve.Pathing;
-import com.igknighters.util.logging.LogInit;
 
 import edu.wpi.first.wpilibj.DriverStation;
 
@@ -26,7 +25,6 @@ public class RobotContainer {
         DriverStation.silenceJoystickConnectionWarning(ConstValues.DEBUG);
         Pathing.loadZones();
         Pathing.loadZonePaths();
-        LogInit.init();
 
         driverController.assignButtons(allSubsystems);
         operatorController.assignButtons(allSubsystems);

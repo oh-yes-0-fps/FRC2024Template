@@ -1,4 +1,4 @@
-package com.igknighters.commands;
+package com.igknighters.commands.swerve;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -8,62 +8,49 @@ import com.igknighters.subsystems.swerve.Swerve;
 import com.igknighters.subsystems.swerve.Pathing.FullPath;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 // import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
-public class AutoDriveDynamic extends CommandBase {
+public class AutoDrive extends CommandBase {
     private Thread asyncThread;
-    private Boolean pathBeenVisualized = false;
     private FullPath path;
     private Boolean hasPath = false;
     private final Swerve swerve;
-    private final Pose2d end;
-    private Boolean badPath = false;
     private FieldObject2d pathVisualization;
 
-    public AutoDriveDynamic(Swerve swerve, Pose2d end) {
+    public AutoDrive(Swerve swerve, Pose2d start, Pose2d end) {
         addRequirements(swerve);
         this.swerve = swerve;
-        this.end = end;
-        createThread();
-        pathVisualization = swerve.getField().getObject("Path" + (swerve.hashCode()+end.hashCode()));
-    }
-
-    private void createThread() {
         asyncThread = new Thread(() -> {
-            Pose2d start = swerve.getPose();
             setPath(Pathing.generatePath(start, end));
         });
-        asyncThread.setName("AutoDriveDynamic Pathgen Thread"+end.hashCode());
+        asyncThread.setName("AutoDrive Pathgen Thread");
+        asyncThread.start();
+        pathVisualization = swerve.getField().getObject("Path" + (start.hashCode()+end.hashCode()));
     }
 
     private synchronized void setPath(Optional<FullPath> path) {
         if (path.isEmpty()) {
-            DriverStation.reportWarning("Dynamic path was bad", false);
-            badPath = true;
-            return;
+            throw new RuntimeException("Path was bad");
         }
         this.path = path.get();
+        this.asyncThread = null;
         hasPath = true;
     }
 
     @Override
     public void initialize() {
-        if (asyncThread.getState() == Thread.State.NEW) {
-            asyncThread.start();
+        if (!hasPath) {
+            return;
         }
+        pathVisualization.setPoses(path.getPoses());
     }
 
     @Override
     public void execute() {
         if (!hasPath) {
             return;
-        }
-        if (!pathBeenVisualized) {
-            pathVisualization.setPoses(path.getPoses());
-            pathBeenVisualized = true;
         }
         var currPose = swerve.getPose();
         var waypoint = path.getWaypoint(currPose);
@@ -79,25 +66,11 @@ public class AutoDriveDynamic extends CommandBase {
         if (!interrupted) {
             swerve.stop();
         }
-        path = null;
-        hasPath = false;
-        pathBeenVisualized = false;
-        //reset async thread
-        createThread();
         pathVisualization.setPoses(new ArrayList<>());
     }
 
     @Override
     public boolean isFinished() {
-        if (badPath) {
-            badPath = false;
-            return true;
-        }
-        var deltaR = swerve.getPose().getRotation().minus(end.getRotation()).getRadians();
-        var deltaT = swerve.getPose().getTranslation().getDistance(end.getTranslation());
-        if (deltaR < 0.1 && deltaT < 0.1) {
-            return true;
-        }
         return false;
     }
 }

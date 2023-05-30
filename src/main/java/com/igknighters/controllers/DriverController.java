@@ -1,6 +1,6 @@
 package com.igknighters.controllers;
 
-import com.igknighters.commands.AutoDriveDynamic;
+import com.igknighters.commands.swerve.AutoDriveDynamic;
 import com.igknighters.subsystems.Resources.Subsystems;
 
 import edu.wpi.first.math.geometry.Pose2d;

@@ -1,4 +1,4 @@
-package com.igknighters.commands;
+package com.igknighters.commands.swerve;
 
 import java.util.function.DoubleSupplier;
 

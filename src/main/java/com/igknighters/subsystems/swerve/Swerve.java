@@ -10,7 +10,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.sim.Pigeon2SimState;
 import com.igknighters.Robot;
-import com.igknighters.commands.ManualDrive;
+import com.igknighters.commands.swerve.ManualDrive;
 import com.igknighters.constants.ConstValues;
 import com.igknighters.constants.RobotSetup;
 import com.igknighters.constants.ConstValues.kSwerve;

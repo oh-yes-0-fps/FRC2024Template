@@ -1,27 +1,27 @@
-package com.igknighters.util.hardware.CtrePro;
+package com.igknighters.util.hardware.CtreV6;
 
-import com.ctre.phoenixpro.StatusCode;
-import com.ctre.phoenixpro.StatusSignalValue;
-import com.ctre.phoenixpro.configs.CurrentLimitsConfigs;
-import com.ctre.phoenixpro.configs.MotionMagicConfigs;
-import com.ctre.phoenixpro.configs.MotorOutputConfigs;
-import com.ctre.phoenixpro.configs.Slot0Configs;
-import com.ctre.phoenixpro.configs.SoftwareLimitSwitchConfigs;
-import com.ctre.phoenixpro.configs.TalonFXConfiguration;
-import com.ctre.phoenixpro.controls.ControlRequest;
-import com.ctre.phoenixpro.controls.DutyCycleOut;
-import com.ctre.phoenixpro.controls.MotionMagicDutyCycle;
-import com.ctre.phoenixpro.controls.MotionMagicVoltage;
-import com.ctre.phoenixpro.controls.PositionDutyCycle;
-import com.ctre.phoenixpro.controls.PositionVoltage;
-import com.ctre.phoenixpro.controls.TorqueCurrentFOC;
-import com.ctre.phoenixpro.controls.VelocityDutyCycle;
-import com.ctre.phoenixpro.controls.VelocityVoltage;
-import com.ctre.phoenixpro.controls.VoltageOut;
-import com.ctre.phoenixpro.hardware.TalonFX;
-import com.ctre.phoenixpro.signals.InvertedValue;
-import com.ctre.phoenixpro.signals.NeutralModeValue;
-import com.ctre.phoenixpro.sim.TalonFXSimState;
+import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.ControlRequest;
+import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.MotionMagicDutyCycle;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionDutyCycle;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityDutyCycle;
+import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.igknighters.util.hardware.HardwareUtil;
 import com.igknighters.util.hardware.HardwareUtil.ApiType;
 import com.igknighters.util.hardware.HardwareUtil.HardwareResponse;
@@ -34,7 +34,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import kotlin.NotImplementedError;
 
-public class TalonFXProWrapper extends MotorWrapper {
+public class TalonFXv6Wrapper extends MotorWrapper {
 
     private final String motorModel = "TalonFX(pro)";
 
@@ -45,17 +45,17 @@ public class TalonFXProWrapper extends MotorWrapper {
     private Boolean foc = false;
 
     private Boolean useMotionConstraints = false;
-    private StatusSignalValue<Double> veloSignal;
-    private StatusSignalValue<Double> posSignal;
-    private StatusSignalValue<Double> voltSignal;
-    private StatusSignalValue<Double> currentSignal;
-    private StatusSignalValue<Double> tempSignal;
+    private StatusSignal<Double> veloSignal;
+    private StatusSignal<Double> posSignal;
+    private StatusSignal<Double> voltSignal;
+    private StatusSignal<Double> currentSignal;
+    private StatusSignal<Double> tempSignal;
 
     private int updateHertz = 50;
 
     private Double kp, kd, ki = 0d;
 
-    public TalonFXProWrapper(int canID, String canBus, boolean enabled) {
+    public TalonFXv6Wrapper(int canID, String canBus, boolean enabled) {
         super(ApiType.CTREv5, canID, canBus, enabled);
         if (enabled) {
             this.motor = new TalonFX(canID, canBus);

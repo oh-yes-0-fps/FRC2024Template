@@ -52,6 +52,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void robotInit() {
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         BootupLogger.BootupLog("Robot Init");
         RobotContainer.robotStartup();
         UtilPeriodic.addCallback(this);

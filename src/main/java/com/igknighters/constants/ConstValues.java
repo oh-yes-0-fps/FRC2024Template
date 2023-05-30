@@ -78,6 +78,8 @@ public class ConstValues {
         public static double TRACK_WIDTH_X = Units.inchesToMeters(26);
         public static double TRACK_WIDTH_Y = Units.inchesToMeters(26);
 
+        public static double SLIP_CURRENT = 20;
+
         public static int GYRO_ID = 0;
 
         public static double WHEEL_DIAMETER = Units.inchesToMeters(4);
@@ -89,24 +91,22 @@ public class ConstValues {
 
         public static boolean INVERT_ANGLE_MOTORS = true;
 
-        public static class DriveControllerConstants {
+        public static class DriveMotorConstants {
             public static double kP = 0.0001;
             public static double kI = 0.0;
             public static double kD = 0.0;
             public static double kS = 0.67468;
             public static double kV = 2.14939;
             public static double kA = 0.0001;
-            public static double kF = 0.0;
         }
 
-        public static class AngleControllerConstants {
+        public static class AngleMotorConstants {
             public static double kP = 0.2;
             public static double kI = 0.0;
             public static double kD = 1.0;
             public static double kS = 0.55;
             public static double kV = 0.23;
             public static double kA = 0.0056;
-            public static double kF = 0.0;
         }
 
         public static class kFrontLeft {

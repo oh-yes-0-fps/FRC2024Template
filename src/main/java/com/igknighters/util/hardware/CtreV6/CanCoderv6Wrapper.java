@@ -1,12 +1,12 @@
-package com.igknighters.util.hardware.CtrePro;
+package com.igknighters.util.hardware.CtreV6;
 
-import com.ctre.phoenixpro.StatusCode;
-import com.ctre.phoenixpro.StatusSignalValue;
-import com.ctre.phoenixpro.configs.CANcoderConfiguration;
-import com.ctre.phoenixpro.configs.MagnetSensorConfigs;
-import com.ctre.phoenixpro.hardware.CANcoder;
-import com.ctre.phoenixpro.signals.SensorDirectionValue;
-import com.ctre.phoenixpro.sim.CANcoderSimState;
+import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.MagnetSensorConfigs;
+import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
+import com.ctre.phoenix6.sim.CANcoderSimState;
 import com.igknighters.util.hardware.HardwareUtil;
 import com.igknighters.util.hardware.HardwareUtil.ApiType;
 import com.igknighters.util.hardware.HardwareUtil.HardwareResponse;
@@ -18,21 +18,21 @@ import com.igknighters.util.hardware.abstracts.EncoderWrapper;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
 
-public class CanCoderProWrapper extends EncoderWrapper {
+public class CanCoderv6Wrapper extends EncoderWrapper {
 
     private final String encoderModel = "CANCoder(pro)";
 
     private final CANcoder encoder;
     private final CANcoderSimState sim;
 
-    private StatusSignalValue<Double> veloSignal;
-    private StatusSignalValue<Double> posSignal;
-    private StatusSignalValue<Double> voltSignal;
-    private StatusSignalValue<Double> absPosSignal;
+    private StatusSignal<Double> veloSignal;
+    private StatusSignal<Double> posSignal;
+    private StatusSignal<Double> voltSignal;
+    private StatusSignal<Double> absPosSignal;
 
     private int updateHertz = 50;
 
-    public CanCoderProWrapper(int canID, String canBus, boolean enabled) {
+    public CanCoderv6Wrapper(int canID, String canBus, boolean enabled) {
         super(ApiType.CTREv5, canID, canBus, enabled);
         if (enabled) {
             this.encoder = new CANcoder(canID, canBus);

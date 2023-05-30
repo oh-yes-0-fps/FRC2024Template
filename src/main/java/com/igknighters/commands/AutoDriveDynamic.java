@@ -93,6 +93,11 @@ public class AutoDriveDynamic extends CommandBase {
             badPath = false;
             return true;
         }
+        var deltaR = swerve.getPose().getRotation().minus(end.getRotation()).getRadians();
+        var deltaT = swerve.getPose().getTranslation().getDistance(end.getTranslation());
+        if (deltaR < 0.1 && deltaT < 0.1) {
+            return true;
+        }
         return false;
     }
 }

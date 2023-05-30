@@ -2,8 +2,8 @@ package com.igknighters.util.hardware.abstracts;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.igknighters.util.hardware.CtrePro.CanCoderProWrapper;
 import com.igknighters.util.hardware.CtreV5.CanCoderv5Wrapper;
+import com.igknighters.util.hardware.CtreV6.CanCoderv6Wrapper;
 import com.igknighters.util.hardware.HardwareUtil.ApiType;
 import com.igknighters.util.hardware.HardwareUtil.HardwareResponse;
 import com.igknighters.util.hardware.HardwareUtil.HardwareValueResponse;
@@ -51,8 +51,8 @@ public abstract class EncoderWrapper
         switch (apiType) {
             case CTREv5:
                 return new CanCoderv5Wrapper(canID, canBus, enabled);
-            case CTREPro:
-                return new CanCoderProWrapper(canID, canBus, enabled);
+            case CTREv6:
+                return new CanCoderv6Wrapper(canID, canBus, enabled);
             default:
                 throw new IllegalArgumentException("ApiType " + apiType + " is not supported");
         }

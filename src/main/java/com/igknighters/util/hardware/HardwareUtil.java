@@ -24,7 +24,7 @@ public class HardwareUtil {
     }
 
     public static enum ApiType {
-        CTREv5, CTREv6, CTREPro, REV
+        CTREv5, CTREv6, REV
     }
 
     ///////////////////////////////////////////////////////////

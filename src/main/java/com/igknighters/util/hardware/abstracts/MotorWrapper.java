@@ -2,8 +2,8 @@ package com.igknighters.util.hardware.abstracts;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.igknighters.util.hardware.CtrePro.TalonFXProWrapper;
 import com.igknighters.util.hardware.CtreV5.TalonFXv5Wrapper;
+import com.igknighters.util.hardware.CtreV6.TalonFXv6Wrapper;
 import com.igknighters.util.hardware.HardwareUtil.ApiType;
 import com.igknighters.util.hardware.HardwareUtil.HardwareResponse;
 import com.igknighters.util.hardware.HardwareUtil.HardwareValueResponse;
@@ -52,8 +52,8 @@ public abstract class MotorWrapper
         switch (apiType) {
             case CTREv5:
                 return new TalonFXv5Wrapper(canID, canBus, enabled);
-            case CTREPro:
-                return new TalonFXProWrapper(canID, canBus, enabled);
+            case CTREv6:
+                return new TalonFXv6Wrapper(canID, canBus, enabled);
             default:
                 throw new IllegalArgumentException("ApiType " + apiType + " is not supported");
         }
@@ -116,7 +116,7 @@ public abstract class MotorWrapper
         return apiType;
     }
 
-    /**This does nothing on motors and will return a non-implemented response */
+    /** This does nothing on motors and will return a non-implemented response */
     @Override
     public HardwareResponse setOffset(PositionUnit unitType, Double offset) {
         return HardwareResponse.notImplemented(this.getClass().getName() + ".setOffset", enabled);

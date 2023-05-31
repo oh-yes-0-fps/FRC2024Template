@@ -23,6 +23,7 @@ import com.igknighters.util.logging.AutoLog.AL.Shuffleboard;
 import com.igknighters.util.vision.DefinedRobotCameras;
 import com.igknighters.util.vision.VisionPoseEstimator;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -184,8 +185,9 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
     }
 
     public void pursueDriverInput(Translation2d normTrans, double normRot) {
-        var rotationSetpoint = pigeon.getRotation2d().plus(
-                new Rotation2d(normRot * kSwerve.MAX_TURN_VELOCITY * ConstValues.PERIODIC_TIME));
+        double maxRotPerCycle = (kSwerve.MAX_TURN_VELOCITY * ConstValues.PERIODIC_TIME);
+        var rotationSetpoint = getPose().getRotation().plus(
+                Rotation2d.fromRadians(normRot * maxRotPerCycle));
         var pose = new Pose2d(normTrans, rotationSetpoint);
         pursuePose(pose);
     }
@@ -199,8 +201,10 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
     private Pose2d poseFromWaypoint(Waypoint waypoint) {
         Pose2d currPose = this.getPose();
         Translation2d translation = waypoint.getTranslation().minus(currPose.getTranslation());
-        // normalize translation
-        translation = translation.times(1 / translation.getNorm());
+        translation = translation.div(kSwerve.MAX_DRIVE_VELOCITY * ConstValues.PERIODIC_TIME);
+        if (Math.abs(translation.getNorm()) > 1) {
+            translation = translation.div(translation.getNorm());
+        }
         translation = translation.times(waypoint.getSpeedPercent());
         return new Pose2d(translation, waypoint.getRotation());
     }
@@ -212,8 +216,8 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
         double xVeloc = kSwerve.MAX_DRIVE_VELOCITY * pose.getX();
         double yVeloc = kSwerve.MAX_DRIVE_VELOCITY * pose.getY();
         // calculate the rotation of the robot
-        double rVeloc = pose.getRotation().minus(currPos.getRotation())
-                .getRadians() * (kSwerve.MAX_TURN_VELOCITY * ConstValues.PERIODIC_TIME);
+        double rVeloc = pose.getRotation().minus(currPos.getRotation()).getRadians() / ConstValues.PERIODIC_TIME;
+        rVeloc = MathUtil.clamp(rVeloc, -kSwerve.MAX_TURN_VELOCITY, kSwerve.MAX_TURN_VELOCITY);
         // calculate the module states
         var chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xVeloc, yVeloc,
                 rVeloc, currPos.getRotation());

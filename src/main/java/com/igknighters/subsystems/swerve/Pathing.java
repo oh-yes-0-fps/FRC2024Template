@@ -345,6 +345,7 @@ public class Pathing {
                 }
                 waypoints.add(new Waypoint(start.interpolate(end, i), new Rotation2d(), 1.0));
             }
+            waypoints.add(new Waypoint(end, new Rotation2d(), 1.0));
         }
 
         public double setWaypointDist(double offset) {
@@ -489,7 +490,6 @@ public class Pathing {
 
             // loop variables
             double turnBy = totalDist * 0.9;
-            double distFromStart = 0.0;
             double lastX = goingEast ? 0.0 : 100.0;
             double lastY = goingNorth ? 0.0 : 100.0;
             boolean xOrientedViable = true;
@@ -520,7 +520,7 @@ public class Pathing {
                 }
 
                 // set rotation setpoint
-                double turnByPercent = (distFromStart) / turnBy;
+                double turnByPercent = waypoint.getDistFromStart() / turnBy;
                 var rot = startRot.interpolate(endRot, turnByPercent);
                 waypoint.setRotation(rot);
 
@@ -594,7 +594,7 @@ public class Pathing {
         }
 
         public Waypoint getWaypointTriangulated(Pose2d currPose) {
-            // throw new NotImplementedError();
+            //TODO: this can occasionally get stuck if theres a sharp turn or such
             Translation2d currTranslation = currPose.getTranslation();
             double distFromStart = currTranslation.getDistance(startPoint);
             double distFromEnd = currTranslation.getDistance(endPoint);
@@ -612,17 +612,24 @@ public class Pathing {
                 return getWaypointFromIdx(waypointIdx + 1);
             }
             // if the two waypoints are not the same, return the one that is on the left
+            boolean countBackwards = waypointIdx > waypointList.size()-(waypointList.size()/10);
             if (isLeft(currTranslation)) {
                 int pointsTried = 0;
                 while (pointsTried < waypointList.size()) {
                     if (leftWaypoints.contains(waypointIdx)) {
                         return getWaypointFromIdx(waypointIdx + 1);
                     } else {
-                        waypointIdx++;
-                        if (waypointIdx >= waypointList.size()) {
-                            waypointIdx = 0;
+                        if (countBackwards) {
+                            waypointIdx--;
+                            if (waypointIdx < 0) {
+                                waypointIdx = waypointList.size() - 1;
+                            }
+                        } else {
+                            waypointIdx++;
+                            if (waypointIdx >= waypointList.size()) {
+                                waypointIdx = 0;
+                            }
                         }
-                        pointsTried++;
                     }
                 }
             } else {
@@ -631,11 +638,17 @@ public class Pathing {
                     if (!leftWaypoints.contains(waypointIdx)) {
                         return getWaypointFromIdx(waypointIdx + 1);
                     } else {
-                        waypointIdx++;
-                        if (waypointIdx >= waypointList.size()) {
-                            waypointIdx = 0;
+                        if (countBackwards) {
+                            waypointIdx--;
+                            if (waypointIdx < 0) {
+                                waypointIdx = waypointList.size() - 1;
+                            }
+                        } else {
+                            waypointIdx++;
+                            if (waypointIdx >= waypointList.size()) {
+                                waypointIdx = 0;
+                            }
                         }
-                        pointsTried++;
                     }
                 }
             }

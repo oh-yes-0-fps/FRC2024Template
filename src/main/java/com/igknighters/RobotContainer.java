@@ -32,6 +32,10 @@ public class RobotContainer {
 
     }
 
+    public static AllSubsystems getAllSubsystems() {
+        return allSubsystems;
+    }
+
     /// INITIALIZATION
     /**
      * Runs on teleop init, test init and auto init

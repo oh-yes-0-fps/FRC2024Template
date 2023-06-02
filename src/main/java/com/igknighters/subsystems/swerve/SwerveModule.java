@@ -1,5 +1,8 @@
 package com.igknighters.subsystems.swerve;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -161,8 +164,9 @@ public class SwerveModule implements Sendable {
         lastRefeshTimestamp = timeStamp;
     }
 
-    public BaseStatusSignal[] getSignals() {
-        return signals;
+    public ArrayList<StatusSignal<Double>> getSignals() {
+        return new ArrayList<>(
+            List.of(drivePosition, driveVelocity, steerPosition, steerVelocity));
     }
 
     @Override

@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.igknighters.constants.ConstValues;
 import com.igknighters.util.logging.BootupLogger;
 
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -17,6 +18,7 @@ public class UtilPeriodic {
     public static final String robotLoopKey = "RobotLoop";
     private static final HashMap<String, Runnable> periodicRunnables = new HashMap<>();
     private static final ConcurrentMap<String, Double> times = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, LinearFilter> avgTimes = new ConcurrentHashMap<>();
     private static final HashMap<Frequency, Integer> frequencyMap = new HashMap<>();
     private static final NetworkTable periodicTimesTable = NetworkTableInstance.getDefault().getTable("PeriodicTimes");
     static {
@@ -57,6 +59,9 @@ public class UtilPeriodic {
     // --period timing--//
     public static synchronized void startTimer(String key) {
         times.put(key, time());
+        if (!avgTimes.containsKey(key)) {
+            avgTimes.put(key, LinearFilter.movingAverage(20));
+        }
     }
 
     public static synchronized void endTimer(String key) {
@@ -65,7 +70,8 @@ public class UtilPeriodic {
             return;
         }
         double timeTakenMs = (time() - times.get(key)) * 1000;
-        periodicTimesTable.getEntry(key).setDouble(timeTakenMs);
+        periodicTimesTable.getEntry(key).setDouble(
+            avgTimes.get(key).calculate(timeTakenMs));
         times.remove(key);
     }
 

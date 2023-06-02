@@ -34,22 +34,17 @@ public class Robot extends TimedRobot {
     protected void loopFunc() {
         UtilPeriodic.startTimer(UtilPeriodic.robotLoopKey);
         super.loopFunc();
+        // UtilPeriodic.endTimer("BuiltinLogging");
     }
 
     @Override
     public void startCompetition() {
         BootupLogger.BootupLog("Competition Started");
         super.startCompetition();
-        UtilPeriodic.endTimer("BuiltinLogging");
     }
 
     //END DONT TOUCH THIS
 
-    /**
-     * This function is run when the robot is first started up and should be used
-     * for any
-     * initialization code.
-     */
     @Override
     public void robotInit() {
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
@@ -59,67 +54,49 @@ public class Robot extends TimedRobot {
         BootupLogger.BootupLog("Done");
     }
 
-    /**
-     * This function is called every 20 ms, no matter the mode. Use this for items
-     * like diagnostics
-     * that you want ran during disabled, autonomous, teleoperated and test.
-     *
-     * <p>
-     * This runs after the mode specific periodic functions, but before LiveWindow
-     * and
-     * SmartDashboard integrated updating.
-     */
     @Override
     public void robotPeriodic() {
         UtilPeriodic.endTimer(UtilPeriodic.robotLoopKey);
         UtilPeriodic.startTimer("CommandScheduler");
         CommandScheduler.getInstance().run();
         UtilPeriodic.endTimer("CommandScheduler");
-        UtilPeriodic.startTimer("BuiltinLogging");
     }
 
-    /** This function is called once when autonomous is enabled. */
     @Override
     public void autonomousInit() {
         RobotContainer.autoInit();
         RobotContainer.enabledInit();
     }
 
-    /** This function is called periodically(every 20ms) during autonomous. */
     @Override
     public void autonomousPeriodic() {
         RobotContainer.autoPeriodic();
         RobotContainer.enabledPeriodic();
     }
 
-    /** This function is called once when teleop is enabled. */
     @Override
     public void teleopInit() {
         RobotContainer.teleopInit();
         RobotContainer.enabledInit();
     }
 
-    /** This function is called periodically(every 20ms) during operator control. */
     @Override
     public void teleopPeriodic() {
         RobotContainer.teleopPeriodic();
         RobotContainer.enabledPeriodic();
     }
 
-    /** This function is called once when the robot is disabled. */
     @Override
     public void disabledInit() {
         CommandScheduler.getInstance().cancelAll();
         RobotContainer.disabledInit();
     }
 
-    /** This function is called periodically(every 20ms) when disabled. */
     @Override
     public void disabledPeriodic() {
         RobotContainer.disabledPeriodic();
     }
 
-    /** This function is called once when test mode is enabled. */
     @Override
     public void testInit() {
         CommandScheduler.getInstance().cancelAll();
@@ -127,20 +104,17 @@ public class Robot extends TimedRobot {
         RobotContainer.enabledInit();
     }
 
-    /** This function is called periodically(every 20ms) during test mode. */
     @Override
     public void testPeriodic() {
         RobotContainer.testPeriodic();
         RobotContainer.enabledPeriodic();
     }
 
-    /** This function is called once when the robot is first started up. */
     @Override
     public void simulationInit() {
         RobotContainer.simulationInit();
     }
 
-    /** This function is called periodically(every 20ms) whilst in simulation. */
     @Override
     public void simulationPeriodic() {
         RobotContainer.simulationPeriodic();

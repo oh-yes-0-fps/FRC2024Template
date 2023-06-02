@@ -6,27 +6,24 @@ import com.igknighters.constants.ConstValues.kSwerve.kFrontRight;
 import com.igknighters.controllers.ControllerParent;
 import com.igknighters.controllers.DriverController;
 import com.igknighters.controllers.ControllerParent.ControllerType;
-import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.sim.Pigeon2SimState;
 import com.igknighters.Robot;
+import com.igknighters.RobotState;
 import com.igknighters.commands.swerve.ManualDrive;
 import com.igknighters.constants.ConstValues;
-import com.igknighters.constants.RobotSetup;
 import com.igknighters.constants.ConstValues.kSwerve;
 import com.igknighters.constants.ConstValues.kSwerve.kBackLeft;
 import com.igknighters.constants.ConstValues.kSwerve.kBackRight;
 import com.igknighters.subsystems.Resources.TestableSubsystem;
 import com.igknighters.subsystems.swerve.Pathing.Waypoint;
-import com.igknighters.util.UtilPeriodic;
 import com.igknighters.util.logging.AutoLog.AL.Shuffleboard;
-import com.igknighters.util.vision.DefinedRobotCameras;
-import com.igknighters.util.vision.VisionPoseEstimator;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -36,7 +33,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -50,22 +46,19 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
     private final SwerveModule backLeftModule;
     private final SwerveModule backRightModule;
 
-    private final Thread odometryThread;
-
     private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
             new Translation2d[] {
-                    // front left
-                    new Translation2d(-kSwerve.TRACK_WIDTH_X / 2.0, -kSwerve.TRACK_WIDTH_Y / 2.0),
-                    // front right
-                    new Translation2d(kSwerve.TRACK_WIDTH_X / 2.0, -kSwerve.TRACK_WIDTH_Y / 2.0),
-                    // back left
-                    new Translation2d(-kSwerve.TRACK_WIDTH_X / 2.0, kSwerve.TRACK_WIDTH_Y / 2.0),
-                    // back right
-                    new Translation2d(kSwerve.TRACK_WIDTH_X / 2.0, kSwerve.TRACK_WIDTH_Y / 2.0)
+                // back right
+                new Translation2d(kSwerve.TRACK_WIDTH_X / 2.0, kSwerve.TRACK_WIDTH_Y / 2.0),
+                // front right
+                new Translation2d(kSwerve.TRACK_WIDTH_X / 2.0, -kSwerve.TRACK_WIDTH_Y / 2.0),
+                // front left
+                new Translation2d(-kSwerve.TRACK_WIDTH_X / 2.0, -kSwerve.TRACK_WIDTH_Y / 2.0),
+                // back left
+                new Translation2d(-kSwerve.TRACK_WIDTH_X / 2.0, kSwerve.TRACK_WIDTH_Y / 2.0),
             });
 
     private final SwerveDrivePoseEstimator poseEstimator;
-    private final VisionPoseEstimator visionEstimator;
 
     @Shuffleboard
     private final Field2d field = new Field2d();
@@ -75,58 +68,6 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
     private final Pigeon2SimState pigeonSim;
 
     private final SwerveModule[] modules;
-
-    private Pose2d lastPose = new Pose2d();
-
-    private class OdometryThread extends Thread {
-        private BaseStatusSignal[] allSignals;
-
-        public OdometryThread() {
-            super();
-            allSignals = new BaseStatusSignal[(modules.length * 4) + 2];
-            for (int i = 0; i < modules.length; i++) {
-                var signals = modules[i].getSignals();
-                allSignals[i * 4] = signals[0];
-                allSignals[i * 4 + 1] = signals[1];
-                allSignals[i * 4 + 2] = signals[2];
-                allSignals[i * 4 + 3] = signals[3];
-            }
-            allSignals[allSignals.length - 2] = pigeon.getYaw();
-            allSignals[allSignals.length - 1] = pigeon.getAngularVelocityZ();
-            for (var sig : allSignals) {
-                sig.setUpdateFrequency(250);
-            }
-        }
-
-        @Override
-        public void run() {
-            while (true) {
-                if (Robot.isReal()) {
-                    UtilPeriodic.startTimer("Odometry");
-                    BaseStatusSignal.waitForAll(0.1, allSignals);
-                    double currentTime = Timer.getFPGATimestamp();
-
-                    for (var module : modules) {
-                        module.setRefreshTimestamp(currentTime);
-                    }
-
-                    var modulePositions = getModulePositions();
-                    double yawDegrees =
-                            BaseStatusSignal.getLatencyCompensatedValue(
-                                    pigeon.getYaw(), pigeon.getAngularVelocityZ());
-
-                    for (var estRoboPose : visionEstimator.estimateCurrentPosition()) {
-                        poseEstimator.addVisionMeasurement(estRoboPose.estimatedPose.toPose2d(),
-                            estRoboPose.timestampSeconds);
-                    }
-                    setPose(poseEstimator.update(
-                        Rotation2d.fromDegrees(yawDegrees), modulePositions));
-                    UtilPeriodic.endTimer("Odometry");
-                }
-            }
-        }
-    }
-
 
     /** Creates a new Swerve. */
     public Swerve() {
@@ -151,13 +92,8 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
                 new Pose2d(new Translation2d(2.2, 1d), Rotation2d.fromDegrees(0d)),
                 VecBuilder.fill(0.9, 0.9, 0.1),
                 VecBuilder.fill(0.1, 0.1, 1));
-        lastPose = poseEstimator.getEstimatedPosition();
 
-        visionEstimator = new VisionPoseEstimator(kSwerve.APRIL_TAG_FIELD, 
-            DefinedRobotCameras.getCameras(RobotSetup.getRobotID()));
-
-        odometryThread = new OdometryThread();
-        odometryThread.start();
+        Odometry.startRobotStateOdometry(modules, pigeon, poseEstimator);
 
         var driveController = ControllerParent.getController(ControllerType.Driver);
         if (driveController.isPresent()) {
@@ -173,11 +109,7 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
     }
 
     public Pose2d getPose() {
-        return lastPose;
-    }
-
-    private void setPose(Pose2d pose) {
-        lastPose = pose;
+        return RobotState.queryRoboPose().toPose2d();
     }
 
     public Field2d getField() {
@@ -235,8 +167,9 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
         double deltaX = chassisSpeeds.vxMetersPerSecond * ConstValues.PERIODIC_TIME;
         double deltaY = chassisSpeeds.vyMetersPerSecond * ConstValues.PERIODIC_TIME;
         double deltaTheta = chassisSpeeds.omegaRadiansPerSecond * ConstValues.PERIODIC_TIME;
-        lastPose = lastPose.plus(new Transform2d(new Translation2d(deltaX, deltaY),
+        var newPose = getPose().plus(new Transform2d(new Translation2d(deltaX, deltaY),
                 new Rotation2d(deltaTheta)));
+        RobotState.postRoboPose(new Pose3d(newPose));
     }
 
     public void setModuleStates(SwerveModuleState[] moduleStates) {
@@ -271,13 +204,6 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
 
     @Override
     public void periodic() {
-        if (Robot.isReal()) {
-            for (var estRoboPose : visionEstimator.estimateCurrentPosition()) {
-                poseEstimator.addVisionMeasurement(estRoboPose.estimatedPose.toPose2d(),
-                    estRoboPose.timestampSeconds);
-            }
-            lastPose = poseEstimator.update(pigeon.getRotation2d(), getModulePositions());
-        }
         field.setRobotPose(getPose());
 
         var optDriveController = ControllerParent.getController(ControllerType.Driver);

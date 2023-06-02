@@ -4,9 +4,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import edu.wpi.first.hal.DriverStationJNI;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
+@SuppressWarnings("unused")
 public class RobotState {
 
     public static enum GamePiece {
@@ -38,10 +41,11 @@ public class RobotState {
     private static Alliance alliance = Alliance.Invalid;
     private static Double matchTime = 999.0;
     private static Pose3d robotPose = new Pose3d();
-    private static Pose3d endEffectorPose = new Pose3d();
+    private static Transform3d endEffectorTransform = new Transform3d();
+    private static Translation3d accelerationVector = new Translation3d();
 
 
-    public static void dsUpdate() {
+    public static synchronized void dsUpdate() {
         lock.lock();
         alliance = DriverStation.getAlliance();
         matchTime = DriverStation.getMatchTime();
@@ -57,23 +61,35 @@ public class RobotState {
         lock.unlock();
     }
 
-    public static void postGamePiece(GamePiece gamePiece) {
+    public static synchronized void postGamePiece(GamePiece gamePiece) {
         lock.lock();
         heldGamePiece = gamePiece;
         lock.unlock();
     }
 
-    public static void postControlAllocation(ControlAllocation controlAllocation) {
+    public static synchronized void postControlAllocation(ControlAllocation controlAllocation) {
         lock.lock();
         RobotState.controlAllocation = controlAllocation;
         lock.unlock();
     }
 
-    public static void solveMacroState() {
+    public static synchronized void postRoboPose(Pose3d pose) {
+        lock.lock();
+        robotPose = pose;
+        lock.unlock();
+    }
+
+    public static synchronized void postAccelerationVector(Translation3d accelerationVector) {
+        lock.lock();
+        RobotState.accelerationVector = accelerationVector;
+        lock.unlock();
+    }
+
+    public static synchronized void solveMacroState() {
         //pass
     }
 
-    public static GamePiece queryGamePiece() {
+    public static synchronized GamePiece queryGamePiece() {
         lock.lock();
         try {
             return heldGamePiece;
@@ -82,7 +98,7 @@ public class RobotState {
         }
     }
 
-    public static ControlAllocation queryControlAllocation() {
+    public static synchronized ControlAllocation queryControlAllocation() {
         lock.lock();
         try {
             return controlAllocation;
@@ -91,5 +107,13 @@ public class RobotState {
         }
     }
 
+    public static synchronized Pose3d queryRoboPose() {
+        lock.lock();
+        try {
+            return robotPose;
+        } finally {
+            lock.unlock();
+        }
+    }
 
 }

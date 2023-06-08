@@ -6,6 +6,10 @@ import com.igknighters.constants.ConstValues.kSwerve.kFrontRight;
 import com.igknighters.controllers.ControllerParent;
 import com.igknighters.controllers.DriverController;
 import com.igknighters.controllers.ControllerParent.ControllerType;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.sim.Pigeon2SimState;
 import com.igknighters.Robot;
@@ -17,6 +21,8 @@ import com.igknighters.constants.ConstValues.kSwerve.kBackLeft;
 import com.igknighters.constants.ConstValues.kSwerve.kBackRight;
 import com.igknighters.subsystems.Resources.TestableSubsystem;
 import com.igknighters.subsystems.swerve.Pathing.Waypoint;
+import com.igknighters.util.field.FieldRegionUtil;
+import com.igknighters.util.field.FieldRegionUtil.FieldRegions;
 import com.igknighters.util.logging.AutoLog.AL.Shuffleboard;
 
 import edu.wpi.first.math.MathUtil;
@@ -109,7 +115,7 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
     }
 
     public Pose2d getPose() {
-        return RobotState.queryRoboPose().toPose2d();
+        return RobotState.queryRoboPose().value.toPose2d();
     }
 
     public Field2d getField() {
@@ -170,6 +176,12 @@ public class Swerve extends SubsystemBase implements TestableSubsystem {
         var newPose = getPose().plus(new Transform2d(new Translation2d(deltaX, deltaY),
                 new Rotation2d(deltaTheta)));
         RobotState.postRoboPose(new Pose3d(newPose));
+        var regionMap = FieldRegionUtil.getRegionMap(newPose);
+        Set<FieldRegions> fully = regionMap.get(FieldRegionUtil.RegionEncloseType.Fully);
+        Set<FieldRegions> partially = regionMap.get(FieldRegionUtil.RegionEncloseType.Partially);
+        var both = new HashSet<>(fully);
+        both.addAll(partially);
+        RobotState.postCurrentRobotRegions(both);
     }
 
     public void setModuleStates(SwerveModuleState[] moduleStates) {

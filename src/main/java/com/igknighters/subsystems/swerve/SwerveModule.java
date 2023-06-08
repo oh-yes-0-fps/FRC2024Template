@@ -47,15 +47,17 @@ public class SwerveModule implements Sendable {
 
     // simulation
     // private final FlywheelSim driveWheelSim = new FlywheelSim(
-    //         LinearSystemId.identifyVelocitySystem(
-    //                 kSwerve.DriveMotorConstants.kV * (kSwerve.WHEEL_DIAMETER * Math.PI) / (2 * Math.PI),
-    //                 kSwerve.DriveMotorConstants.kA * (kSwerve.WHEEL_DIAMETER * Math.PI) / (2 * Math.PI)),
-    //         DCMotor.getFalcon500(1), kSwerve.DRIVE_GEAR_RATIO);
+    // LinearSystemId.identifyVelocitySystem(
+    // kSwerve.DriveMotorConstants.kV * (kSwerve.WHEEL_DIAMETER * Math.PI) / (2 *
+    // Math.PI),
+    // kSwerve.DriveMotorConstants.kA * (kSwerve.WHEEL_DIAMETER * Math.PI) / (2 *
+    // Math.PI)),
+    // DCMotor.getFalcon500(1), kSwerve.DRIVE_GEAR_RATIO);
     // private final FlywheelSim steeringSim = new FlywheelSim(
-    //         LinearSystemId.identifyVelocitySystem(
-    //                 kSwerve.AngleMotorConstants.kV, kSwerve.AngleMotorConstants.kA),
-    //         DCMotor.getFalcon500(1),
-    //         kSwerve.DRIVE_GEAR_RATIO);
+    // LinearSystemId.identifyVelocitySystem(
+    // kSwerve.AngleMotorConstants.kV, kSwerve.AngleMotorConstants.kA),
+    // DCMotor.getFalcon500(1),
+    // kSwerve.DRIVE_GEAR_RATIO);
 
     public SwerveModule(int encoderId, int driveMotorId, int angleMotorId, double encoderOffset) {
         // decided not to use hardware util wrappers, i need the lower level of control
@@ -70,8 +72,8 @@ public class SwerveModule implements Sendable {
         driveConfigs.Slot0.kS = kSwerve.DriveMotorConstants.kS;
         driveConfigs.Slot0.kV = kSwerve.DriveMotorConstants.kV;
         driveConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        driveConfigs.TorqueCurrent.PeakForwardTorqueCurrent = kSwerve.SLIP_CURRENT;
-        driveConfigs.TorqueCurrent.PeakReverseTorqueCurrent = -kSwerve.SLIP_CURRENT;
+        driveConfigs.TorqueCurrent.PeakForwardTorqueCurrent = kSwerve.SLIP_CURRENT_CAP;
+        driveConfigs.TorqueCurrent.PeakReverseTorqueCurrent = -kSwerve.SLIP_CURRENT_CAP;
         driveMotor.getConfigurator().apply(driveConfigs);
 
         TalonFXConfiguration angleConfigs = new TalonFXConfiguration();
@@ -81,8 +83,7 @@ public class SwerveModule implements Sendable {
         angleConfigs.Slot0.kS = kSwerve.AngleMotorConstants.kS;
         angleConfigs.Slot0.kV = kSwerve.AngleMotorConstants.kV;
         angleConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        angleConfigs.MotorOutput.Inverted =  
-            kSwerve.INVERT_ANGLE_MOTORS
+        angleConfigs.MotorOutput.Inverted = kSwerve.INVERT_ANGLE_MOTORS
                 ? InvertedValue.Clockwise_Positive
                 : InvertedValue.CounterClockwise_Positive;
         angleConfigs.ClosedLoopGeneral.ContinuousWrap = true;
@@ -119,7 +120,7 @@ public class SwerveModule implements Sendable {
 
     public void setState(SwerveModuleState state) {
         var optimizedState = SwerveModuleState.optimize(state, getAngle());
-        
+
         double angleToSetDeg = optimizedState.angle.getRotations();
         angleMotor.setControl(angleSetter.withPosition(angleToSetDeg));
         double velocityToSet = metersToDriveRotations(optimizedState.speedMetersPerSecond);
@@ -137,13 +138,12 @@ public class SwerveModule implements Sendable {
     private Rotation2d getAngle() {
         refreshSignals();
         return Rotation2d.fromRotations(
-            BaseStatusSignal.getLatencyCompensatedValue(steerPosition, steerVelocity));
+                BaseStatusSignal.getLatencyCompensatedValue(steerPosition, steerVelocity));
     }
 
     private double getDrivePosMeters() {
         refreshSignals();
-        double motorRotations =
-            BaseStatusSignal.getLatencyCompensatedValue(drivePosition, driveVelocity);
+        double motorRotations = BaseStatusSignal.getLatencyCompensatedValue(drivePosition, driveVelocity);
         return driveRotationsToMeters(motorRotations);
     }
 
@@ -166,7 +166,7 @@ public class SwerveModule implements Sendable {
 
     public ArrayList<StatusSignal<Double>> getSignals() {
         return new ArrayList<>(
-            List.of(drivePosition, driveVelocity, steerPosition, steerVelocity));
+                List.of(drivePosition, driveVelocity, steerPosition, steerVelocity));
     }
 
     @Override
@@ -175,35 +175,40 @@ public class SwerveModule implements Sendable {
     }
 
     public void simulationPeriodic() {
-        ///////THIS WAS FOR HARWARE WRAPPER MOTORS, NEED TO REDO FOR TALONFX
+        /////// THIS WAS FOR HARWARE WRAPPER MOTORS, NEED TO REDO FOR TALONFX
         // double driveVoltage = driveMotor.getSimRotorVoltage();
         // if (driveVoltage >= 0)
-        //     driveVoltage = Math.max(0, driveVoltage - kSwerve.DriveMotorConstants.kS);
+        // driveVoltage = Math.max(0, driveVoltage - kSwerve.DriveMotorConstants.kS);
         // else
-        //     driveVoltage = Math.min(0, driveVoltage + kSwerve.DriveMotorConstants.kS);
+        // driveVoltage = Math.min(0, driveVoltage + kSwerve.DriveMotorConstants.kS);
         // driveWheelSim.setInputVoltage(driveVoltage);
 
         // double steerVoltage = angleMotor.getSimRotorVoltage();
         // if (steerVoltage >= 0)
-        //     steerVoltage = Math.max(0, steerVoltage - kSwerve.AngleMotorConstants.kS);
+        // steerVoltage = Math.max(0, steerVoltage - kSwerve.AngleMotorConstants.kS);
         // else
-        //     steerVoltage = Math.min(0, steerVoltage + kSwerve.AngleMotorConstants.kS);
+        // steerVoltage = Math.min(0, steerVoltage + kSwerve.AngleMotorConstants.kS);
         // steeringSim.setInputVoltage(steerVoltage);
 
         // driveWheelSim.update(0.02);
         // steeringSim.update(0.02);
 
         // // update our simulated devices with our simulated physics results
-        // double driveVelocityRps = (driveWheelSim.getAngularVelocityRPM() / 60) * kSwerve.DRIVE_GEAR_RATIO;
+        // double driveVelocityRps = (driveWheelSim.getAngularVelocityRPM() / 60) *
+        // kSwerve.DRIVE_GEAR_RATIO;
         // driveMotor.setSimRotorVelocity(VelocityUnit.RPS, driveVelocityRps);
-        // driveMotor.addSimRotorPosition(PositionUnit.ROTATIONS, driveVelocityRps * ConstValues.PERIODIC_TIME);
+        // driveMotor.addSimRotorPosition(PositionUnit.ROTATIONS, driveVelocityRps *
+        // ConstValues.PERIODIC_TIME);
 
-        // double angleVelocityRps = (steeringSim.getAngularVelocityRPM() / 60) * kSwerve.ANGLE_GEAR_RATIO;
+        // double angleVelocityRps = (steeringSim.getAngularVelocityRPM() / 60) *
+        // kSwerve.ANGLE_GEAR_RATIO;
         // angleMotor.setSimRotorVelocity(VelocityUnit.RPS, angleVelocityRps);
-        // angleMotor.addSimRotorPosition(PositionUnit.ROTATIONS, angleVelocityRps * ConstValues.PERIODIC_TIME);
+        // angleMotor.addSimRotorPosition(PositionUnit.ROTATIONS, angleVelocityRps *
+        // ConstValues.PERIODIC_TIME);
 
         // encoder.setSimRotorVelocity(VelocityUnit.RPS, angleVelocityRps);
-        // encoder.setSimRotorPosition(PositionUnit.ROTATIONS, getAngle().getRotations());
+        // encoder.setSimRotorPosition(PositionUnit.ROTATIONS,
+        // getAngle().getRotations());
 
         // driveMotor.setSimSupplyVoltage(RobotController.getBatteryVoltage());
         // angleMotor.setSimSupplyVoltage(RobotController.getBatteryVoltage());

@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 import com.igknighters.constants.ConstValues;
 import com.igknighters.util.UtilPeriodic;
 import com.igknighters.util.testing.TunableValuesAPI;
-import com.igknighters.util.logging.McqShuffleboardApi.MetadataFields;
+import com.igknighters.util.logging.ShuffleboardApi.MetadataFields;
 import com.igknighters.util.UtilPeriodic.Frequency;
 
 import edu.wpi.first.networktables.NTSendable;
@@ -367,7 +367,7 @@ public class AutoLog {
 
     private static void shuffleboardWidgetHelper(Supplier<?> supplier, DataType type, String f_name, String ss_name,
             AL.Shuffleboard annotation) {
-        McqShuffleboardApi.ShuffleEntry entry = McqShuffleboardApi.getTab(ss_name).addEntry(f_name, supplier);
+        ShuffleboardApi.ShuffleEntry entry = ShuffleboardApi.getTab(ss_name).addEntry(f_name, supplier);
         Map<MetadataFields, Object> metadata = new HashMap<>();
         if (annotation.pos().length > 0) {
             metadata.put(MetadataFields.Position, new double[] { annotation.pos()[0], annotation.pos()[1] });
@@ -384,7 +384,7 @@ public class AutoLog {
     public static void setupSubsystemLogging(Subsystem subsystem) {
         String ss_name = subsystem.getClass().getSimpleName();
         if (ConstValues.DEBUG) {
-            McqShuffleboardApi.getTab(ss_name).addSendable(ss_name, (SubsystemBase) subsystem);
+            ShuffleboardApi.getTab(ss_name).addSendable(ss_name, (SubsystemBase) subsystem);
         } else {
             String pathPrefix;
             if (datalogKeepsShuffleboardPath) {
@@ -439,7 +439,7 @@ public class AutoLog {
                     var annotation = field.getAnnotation(AL.Shuffleboard.class);
                     NetworkTableEntry entry;
                     try {
-                        McqShuffleboardApi.ShuffleEntry sbEntry = McqShuffleboardApi
+                        ShuffleboardApi.ShuffleEntry sbEntry = ShuffleboardApi
                             .getTab(ss_name).addEntry(f_name, field.get(subsystem));
                         Map<MetadataFields, Object> metadata = new HashMap<>();
                         if (annotation.pos().length > 0) {
@@ -528,7 +528,7 @@ public class AutoLog {
                     DataType type = DataType.fromClass(field.getType());
                     if (ConstValues.DEBUG) {
                         if (type == DataType.Sendable) {
-                            McqShuffleboardApi.getTab(ss_name).addSendable(name, (Sendable) getSupplier(field, subsystem).get());
+                            ShuffleboardApi.getTab(ss_name).addSendable(name, (Sendable) getSupplier(field, subsystem).get());
                         } else {
                             shuffleboardWidgetHelper(getSupplier(field, subsystem), type, name, ss_name, annotation);
                         }

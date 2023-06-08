@@ -118,7 +118,13 @@ public class ControllerParent {
         }
     }
 
-    protected final TriggerBindingTuple A, B, X, Y, LB, RB, Back, Start, LS, RS, LT, RT, DPR, DPD, DPL, DPU;
+    protected final TriggerBindingTuple A, B, X, Y, LB, RB, LS, RS, LT, RT, DPR, DPD, DPL, DPU;
+    //i alwayss forget which is which
+    /**Left Center */
+    protected final TriggerBindingTuple Back;
+    /**Right Center */
+    protected final TriggerBindingTuple Start;
+
 
     /**
      * for button idx (nice for sim)

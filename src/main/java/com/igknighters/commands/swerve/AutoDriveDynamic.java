@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.igknighters.subsystems.swerve.Pathing;
 import com.igknighters.subsystems.swerve.Swerve;
 import com.igknighters.subsystems.swerve.Pathing.FullPath;
+import com.igknighters.util.field.AllianceFlipUtil;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -14,34 +15,46 @@ import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class AutoDriveDynamic extends CommandBase {
-    private Thread asyncThread;
+    protected Thread asyncThread;
     private Boolean pathBeenVisualized = false;
     private FullPath path;
     private Boolean hasPath = false;
     private final Swerve swerve;
-    private final Pose2d end;
+    private Pose2d blueEnd;
     private Boolean badPath = false;
     private FieldObject2d pathVisualization;
 
     public AutoDriveDynamic(Swerve swerve, Pose2d end) {
         addRequirements(swerve);
         this.swerve = swerve;
-        this.end = end;
+        this.blueEnd = end;
         createThread();
         pathVisualization = swerve.getField().getObject("Path" + (swerve.hashCode()+end.hashCode()));
     }
 
-    private void createThread() {
+    private Pose2d getEnd() {
+        return AllianceFlipUtil.apply(blueEnd);
+    }
+
+    public void setEnd(Pose2d end) {
+        this.blueEnd = end;
+        createThread();
+    }
+
+    protected void createThread() {
+        if (asyncThread != null) {
+            asyncThread.interrupt();
+        }
         asyncThread = new Thread(() -> {
             Pose2d start = swerve.getPose();
-            setPath(Pathing.generatePath(start, end));
+            setPath(Pathing.generatePath(start, getEnd()));
         });
-        asyncThread.setName("AutoDriveDynamic Pathgen Thread"+end.hashCode());
+        asyncThread.setName("AutoDriveDynamic Pathgen Thread"+blueEnd.hashCode());
     }
 
     private synchronized void setPath(Optional<FullPath> path) {
         if (path.isEmpty()) {
-            DriverStation.reportWarning("Dynamic path was bad", false);
+            DriverStation.reportWarning("Dynamic path was bad", true);
             badPath = true;
             return;
         }
@@ -93,11 +106,9 @@ public class AutoDriveDynamic extends CommandBase {
             badPath = false;
             return true;
         }
-        var deltaR = swerve.getPose().getRotation().minus(end.getRotation()).getRadians();
-        var deltaT = swerve.getPose().getTranslation().getDistance(end.getTranslation());
-        if (deltaR < 0.03 && deltaT < 0.03) {
-            return true;
+        if (!hasPath) {
+            return false;
         }
-        return false;
+        return path.hasFinished(swerve.getPose(), 0.03, 0.03);
     }
 }

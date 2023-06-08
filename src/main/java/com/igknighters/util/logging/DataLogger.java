@@ -1,5 +1,7 @@
 package com.igknighters.util.logging;
 
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.datalog.*;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -13,6 +15,9 @@ import java.util.function.Supplier;
 import com.igknighters.util.UtilPeriodic;
 
 public class DataLogger {
+    private DataLogger() {
+    }
+
     private static final Map<DataLogEntry, Supplier<?>> dataLogMap = new HashMap<>();
     private static final Collection<DataLogSendableBuilder> sendables = new LinkedHashSet<>();
     private static final DataLog log = DataLogManager.getLog();
@@ -107,6 +112,16 @@ public class DataLogger {
 
     public static void addCustom(DataLogEntry entry, Supplier<?> valueSupplier) {
         dataLogMap.put(entry, valueSupplier);
+    }
+
+    public static void addNetworkTable(NetworkTable table) {
+        NetworkTableInstance.getDefault()
+            .startEntryDataLog(log, table.getPath(), table.getPath());
+    }
+
+    public static void addNetworkTable(NetworkTable table, String dlPath) {
+        NetworkTableInstance.getDefault()
+            .startEntryDataLog(log, table.getPath(), dlPath);
     }
 
     public static void addSendable(Sendable sendable, String pathPrefix, String name) {

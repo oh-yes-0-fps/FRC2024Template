@@ -1,13 +1,33 @@
-package com.igknighters.controllers.autoTeleop;
+package com.igknighters.util.state;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import com.igknighters.RobotState.GamePiece;
+import com.igknighters.constants.ConstValues.kDimensions;
+import com.igknighters.constants.FieldConstants.Grids;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 
 public class ScoringUtil {
+    private static ScoringUtil instance = new ScoringUtil();
+    private static ScoringPose cachedScoringPosition = null;
+
+    public static synchronized ScoringUtil getInstance() {
+        return instance;
+    }
+
+    public static synchronized Optional<ScoringPose> getCachedScoringPosition() {
+        return Optional.ofNullable(cachedScoringPosition);
+    }
+
+    public static synchronized void setCachedScoringPosition(ScoringPose pose) {
+        cachedScoringPosition = pose;
+    }
+
     public enum FillOrder {
         LeftToRight, RightToLeft, CenterToLeft, CenterToRight
     }
@@ -21,19 +41,20 @@ public class ScoringUtil {
     }
 
     private boolean superCharged = false;
-    //fill an array of array of booleans with false
-    private boolean[][] scoringArray = {{false, false, false, false, false, false, false, false, false},
-                                        {false, false, false, false, false, false, false, false, false},
-                                        {false, false, false, false, false, false, false, false, false}};
+    // fill an array of array of booleans with false
+    private boolean[][] scoringArray = { { false, false, false, false, false, false, false, false, false },
+            { false, false, false, false, false, false, false, false, false },
+            { false, false, false, false, false, false, false, false, false } };
     private Set<ScoringPose> superchargedPositions = new HashSet<>();
     private boolean cooperation = false;
-    private int linkPriority = 0;
+    private int linkPriority = 10;
 
     private FillOrder fillOrder = FillOrder.LeftToRight;
     private LevelPreference levelPreference = LevelPreference.High;
     private GamePiece gamepiecePreference = GamePiece.Cone;
 
-    public ScoringUtil() {}
+    private ScoringUtil() {
+    }
 
     public ScoringUtil setFillOrder(FillOrder fillOrder) {
         this.fillOrder = fillOrder;
@@ -56,17 +77,42 @@ public class ScoringUtil {
     }
 
     public ScoreResponse score(int level, int position) {
-        if (level < 0 || level > 2 ) {
+        if (level < 0 || level > 2) {
             return ScoreResponse.InvalidLevel;
         }
         if (position < 0 || position > 8) {
             return ScoreResponse.InvalidPosition;
         }
-        if (scoringArray[level][position]) {
-            return ScoreResponse.PieceAlreadyScored;
+        if (canSuperCharge()) {
+            if (superchargedPositions.contains(new ScoringPose(level, position, isCubeSpot(position)))) {
+                return ScoreResponse.PieceAlreadyScored;
+            }
+            superchargedPositions.add(new ScoringPose(level, position, isCubeSpot(position)));
+        } else {
+            if (scoringArray[level][position]) {
+                return ScoreResponse.PieceAlreadyScored;
+            }
         }
         scoringArray[level][position] = true;
+        printPlacement(level, position);
         return ScoreResponse.Success;
+    }
+
+    public ScoreResponse scoreCached() {
+        if (cachedScoringPosition == null) {
+            return ScoreResponse.InvalidPosition;
+        }
+        return score(cachedScoringPosition.level, cachedScoringPosition.position);
+    }
+
+    private void printPlacement(int level, int position) {
+        GamePiece piece = isCubeSpot(position) ? GamePiece.Cube : GamePiece.Cone;
+        if (canSuperCharge()) {
+            System.out.println("ScoringUtil: Placing " + piece + " on level " + level + " position " + position
+                    + " (supercharged)");
+        } else {
+            System.out.println("ScoringUtil: Placing " + piece + " on level " + level + " position " + position);
+        }
     }
 
     private boolean isInvalid(int level, int position) {
@@ -81,6 +127,9 @@ public class ScoringUtil {
         if (isInvalid(level)) {
             return false;
         }
+        if (superCharged) {
+            return superchargedPositions.stream().filter(p -> p.level == level).count() >= 9;
+        }
         for (int i = 0; i < 9; i++) {
             if (!scoringArray[level][i]) {
                 return false;
@@ -89,6 +138,7 @@ public class ScoringUtil {
         return true;
     }
 
+    @SuppressWarnings("unused")
     private int openNodes(int level) {
         if (isInvalid(level)) {
             return -1;
@@ -157,7 +207,7 @@ public class ScoringUtil {
     }
 
     private boolean isSuperCharged(int level, int position) {
-        return superchargedPositions.contains(new ScoringPose(level, position, false));
+        return superchargedPositions.contains(new ScoringPose(level, position, isCubeSpot(position)));
     }
 
     public class ScoringPose {
@@ -175,6 +225,14 @@ public class ScoringUtil {
             }
         }
 
+        public Pose2d neededRobotPose() {
+            var robotOffset = kDimensions.BUMPER_THICKNESS + kDimensions.ROBOT_LENGTH / 2.0;
+            var x = Grids.outerX + robotOffset;
+            var y = Grids.nodeY[position];
+            Pose2d pose = new Pose2d(x, y, Rotation2d.fromDegrees(180.0));
+            return pose;
+        }
+
         @Override
         public int hashCode() {
             return level * 10 + position;
@@ -182,19 +240,24 @@ public class ScoringUtil {
     }
 
     public ScoringPose getBestScoringLocation() {
+        return getBestScoringLocation(Optional.empty());
+    }
+
+    public ScoringPose getBestScoringLocation(Optional<GamePiece> gamepiece) {
+        canSuperCharge();
         double highestValue = -1.0;
         ScoringPose bestPose = null;
 
         int[] levels;
         switch (this.levelPreference) {
             case Middle:
-                levels = new int[] {1, 2, 0};
+                levels = new int[] { 1, 2, 0 };
                 break;
             case Low:
-                levels = new int[] {0, 1, 2};
+                levels = new int[] { 0, 1, 2 };
                 break;
             default:
-                levels = new int[] {2, 1, 0};
+                levels = new int[] { 2, 1, 0 };
                 break;
         }
 
@@ -204,8 +267,8 @@ public class ScoringUtil {
                 continue;
             }
             int posIdx = -1;
-            double value = openNodes(lvl) * (lvl+1);
             for (var pos : level) {
+                double value = lvl + 1; // * openNodes(lvl)
                 posIdx++;
                 if (pos && !canSuperCharge()) {
                     continue;
@@ -221,22 +284,28 @@ public class ScoringUtil {
                 } else if (this.gamepiecePreference == GamePiece.Cone && !isCubeSpot(posIdx)) {
                     value *= 2;
                 }
-                switch(this.fillOrder) {
+                if (gamepiece.isPresent()) {
+                    GamePiece gp = isCubeSpot(posIdx) ? GamePiece.Cube : GamePiece.Cone;
+                    if (lvl > 0 && gp != gamepiece.get()) {
+                        value *= 0.0;
+                    }
+                }
+                switch (this.fillOrder) {
                     case LeftToRight:
-                        value *= 1 + (posIdx / 8d);
+                        value *= 1 + ((posIdx / 8d) / 2d);
                         break;
                     case RightToLeft:
-                        value *= 1 + ((8 - posIdx) / 8d);
-                        break;
-                    case CenterToLeft:
-                        value *= 1 + ((posIdx - 4) / 4d);
+                        value *= 1 + (((8 - posIdx) / 8d) / 2d);
                         break;
                     case CenterToRight:
-                        value *= 1 + ((4 - posIdx) / 4d);
+                        value *= 1 + (((posIdx - 4) / 4d) / 2d);
+                        break;
+                    case CenterToLeft:
+                        value *= 1 + (((4 - posIdx) / 4d) / 2d);
                         break;
                 }
                 if (isCoopertitionSpot(posIdx)) {
-                    value *= 1.5;
+                    value *= 2.0;
                 }
                 if (value > highestValue) {
                     highestValue = value;
@@ -245,11 +314,8 @@ public class ScoringUtil {
             }
         }
         if (highestValue < 0) {
-            //so unlikely to happen, but just in case
+            // so unlikely to happen, but just in case
             return new ScoringPose(0, 0, false);
-        }
-        if (canSuperCharge()) {
-            superchargedPositions.add(bestPose);
         }
         return bestPose;
     }

@@ -24,11 +24,11 @@ public class RobotSetup {
 
     public enum RobotID {
         RobotA("Yin",
-                Subsystems.list(Subsystems.Example), // can be constructed with enums
+                Subsystems.list(Subsystems.Swerve), // can be constructed with enums
                 RobotConstID.YIN),
 
         RobotB("Yang",
-                Subsystems.list("Example"), // can be constructed with strings(pascal case)
+                Subsystems.list("Swerve"), // can be constructed with strings(pascal case)
                 RobotConstID.YANG),
 
         ChargedUp("Ammonia",

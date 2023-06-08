@@ -1,5 +1,6 @@
 package com.igknighters.subsystems;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -23,7 +24,6 @@ public class Resources {
      */
     public enum Subsystems {
         //add new subsystems here with names in Pascal Case
-        Example("Example"),
         Swerve("Swerve");
 
         public final String name;
@@ -79,20 +79,15 @@ public class Resources {
 
     public static class AllSubsystems {
         private Subsystems[] subsystems;
-        private List<TestableSubsystem> subsystemsList;
+        private List<TestableSubsystem> subsystemsList = new ArrayList<>();
 
         //add new subsystems here, make sure they are public
-        public Optional<Example> example = Optional.empty();
         public Optional<Swerve> swerve = Optional.empty();
 
         public AllSubsystems(Subsystems[] subsystems) {
             this.subsystems = subsystems;
             for (Subsystems subsystem : subsystems) {
                 switch (subsystem) {
-                    //add new cases for new subsystems
-                    case Example:
-                        example = createSubsystem(Example::new);
-                        break;
                     case Swerve:
                         swerve = createSubsystem(Swerve::new);
                         break;
@@ -106,6 +101,7 @@ public class Resources {
             T subsystem = subsystemSupplier.get();
             BootupLogger.BootupLog("Subsystem " + subsystem.getClass().getSimpleName() + " created");
             AutoLog.setupSubsystemLogging(subsystem);
+            subsystemsList.add(subsystem);
             return Optional.of(subsystem);
         }
 

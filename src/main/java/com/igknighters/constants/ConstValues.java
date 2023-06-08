@@ -26,31 +26,17 @@ public class ConstValues {
     @NTIgnore
     public static double DEFAULT_DEADBAND = 0.15;
 
-    public static class kExample {
-
-        public static int WIDTH = 26;
-        @NTIgnore
-        public static int LENGTH = 26;
-
-        public static int VALUE = 2;
-
-        @TunableIgnore
-        @StringConst(yin = "yin", yang = "yang")
-        public static String ROBOT_NAME;
-
-        @BooleanConst(yin = true, yang = false)
-        public static boolean SECOND_BOOM_MOTOR;
-
-        public static class kNested {
-            @IntConst(yin = 1, yang = 2)
-            public static int NESTED_CONST;
-        }
+    @NTIgnore
+    public static class kDimensions {
+        public static double ROBOT_WIDTH = Units.inchesToMeters(26);
+        public static double ROBOT_LENGTH = Units.inchesToMeters(26);
+        public static double BUMPER_THICKNESS = Units.inchesToMeters(2.7);
     }
 
     public static class kSwerve {
         @NTIgnore
         @SuppressWarnings("unused")
-        private static class kSwerveGearRatios {
+        private static class SwerveGearRatios {
             public static final double L1_DRIVE = 8.14;
             public static final double L2_DRIVE = 6.75;
             public static final double L3_DRIVE = 6.12;
@@ -63,7 +49,7 @@ public class ConstValues {
         public static final AprilTagFields APRIL_TAG_FIELD = AprilTagFields.k2023ChargedUp;
 
         public static boolean PREFER_X_ORIENTED_PATHS = true;
-
+        @NTIgnore
         public static String CANIVORE_NAME = "McQDriveBus";
 
         @DoubleConst(yin = 16d * Conv.FEET_TO_METERS, yang = 18d * Conv.FEET_TO_METERS)
@@ -75,18 +61,18 @@ public class ConstValues {
         public static double MAX_TURN_ACCELERATION = 14d;
         public static double MAX_TURN_JERK = 60d;
 
-        public static double TRACK_WIDTH_X = Units.inchesToMeters(26);
-        public static double TRACK_WIDTH_Y = Units.inchesToMeters(26);
+        public static double TRACK_WIDTH_X = Units.inchesToMeters(20.75);
+        public static double TRACK_WIDTH_Y = Units.inchesToMeters(20.75);
 
-        public static double SLIP_CURRENT = 20;
+        public static double SLIP_CURRENT_CAP = 20;
 
-        public static int GYRO_ID = 0;
+        public static int GYRO_ID = 40;
 
         public static double WHEEL_DIAMETER = Units.inchesToMeters(4);
 
-        public static double ANGLE_GEAR_RATIO = kSwerveGearRatios.ANGLE;
+        public static double ANGLE_GEAR_RATIO = SwerveGearRatios.ANGLE;
 
-        @DoubleConst(yin = kSwerveGearRatios.L2_DRIVE, yang = kSwerveGearRatios.L3_DRIVE)
+        @DoubleConst(yin = SwerveGearRatios.L2_DRIVE, yang = SwerveGearRatios.L3_DRIVE)
         public static double DRIVE_GEAR_RATIO;
 
         public static boolean INVERT_ANGLE_MOTORS = true;

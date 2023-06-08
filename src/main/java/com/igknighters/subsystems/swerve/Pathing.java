@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.igknighters.constants.ConstValues.kSwerve;
+import com.igknighters.util.field.AllianceFlipUtil;
 import com.igknighters.util.logging.BootupLogger;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -24,8 +25,10 @@ import edu.wpi.first.wpilibj.Filesystem;
 
 public class Pathing {
 
-    private static final ConcurrentMap<Integer, ConcurrentMap<Integer, ZonePathSeg>> zonePaths = new ConcurrentHashMap<>();
-    private static final List<Zone> zones = new ArrayList<>();
+    private static final ConcurrentMap<Integer, ConcurrentMap<Integer, ZonePathSeg>> zonePathsBlue = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, ConcurrentMap<Integer, ZonePathSeg>> zonePathsRed = new ConcurrentHashMap<>();
+    private static final List<Zone> zonesBlue = new ArrayList<>();
+    private static final List<Zone> zonesRed = new ArrayList<>();
     private static final int waypointSize = 10;
 
     public static void loadZonePaths() {
@@ -58,11 +61,15 @@ public class Pathing {
                 waypoints[j] = binary[i + 3 + j];
             }
             // add path to paths
-            if (!zonePaths.containsKey(startId)) {
-                zonePaths.put(startId, new ConcurrentHashMap<>());
-                zonePaths.get(startId).put(startId, new ZonePathSeg(List.of(), startId, startId));
+            if (!zonePathsBlue.containsKey(startId)) {
+                zonePathsBlue.put(startId, new ConcurrentHashMap<>());
+                zonePathsRed.put(startId, new ConcurrentHashMap<>());
+                zonePathsBlue.get(startId).put(startId, new ZonePathSeg(List.of(), startId, startId));
+                zonePathsBlue.get(startId).put(startId, new ZonePathSeg(List.of(), startId, startId));
             }
-            zonePaths.get(startId).put(endId, new ZonePathSeg(waypoints, startId, endId));
+            var path = new ZonePathSeg(waypoints, startId, endId);
+            zonePathsBlue.get(startId).put(endId, path);
+            zonePathsRed.get(startId).put(endId, path.getRedFlipped());
             // update bytes used
             bytesUsed = 3 + waypoints.length;
             pathsLoaded++;
@@ -105,12 +112,18 @@ public class Pathing {
                         .getFloat();
                 zoneTranslations.add(new Translation2d((double) x, (double) y));
             }
-            zones.add(new Zone(zonesLoaded, zoneTranslations));
+            var newZone = new Zone(zonesLoaded, zoneTranslations);
+            zonesBlue.add(newZone);
+            zonesRed.add(newZone.getRedFlipped());
             // update bytes used
             bytesUsed = 1 + zoneBytes.length;
             zonesLoaded++;
         }
         BootupLogger.BootupLog("Loaded " + zonesLoaded + " zones");
+    }
+
+    private static Boolean isRedAlliance() {
+        return DriverStation.getAlliance() == DriverStation.Alliance.Red;
     }
 
     public enum CardinalDirection {
@@ -189,6 +202,13 @@ public class Pathing {
 
         public void setDistFromStart(double distFromStart) {
             this.distFromStart = distFromStart;
+        }
+
+        public Waypoint getRedFlipped() {
+            return new Waypoint(
+                AllianceFlipUtil.flipToRed(translation),
+                AllianceFlipUtil.flipToRed(rotation),
+                speedPercent);
         }
 
         /**
@@ -323,6 +343,14 @@ public class Pathing {
             return new ZonePathSeg(newWaypoints, endZoneId, startZoneId);
         }
 
+        public ZonePathSeg getRedFlipped() {
+            List<Waypoint> newWaypoints = new ArrayList<>();
+            for (Waypoint waypoint : waypoints) {
+                newWaypoints.add(waypoint.getRedFlipped());
+            }
+            return new ZonePathSeg(newWaypoints, endZoneId, startZoneId);
+        }
+
         public ZonePathSeg clone() {
             List<Waypoint> newWaypoints = new ArrayList<>();
             for (Waypoint waypoint : waypoints) {
@@ -438,6 +466,14 @@ public class Pathing {
         public int getId() {
             return id;
         }
+
+        public Zone getRedFlipped() {
+            ArrayList<Translation2d> newVertecies = new ArrayList<>();
+            for (Translation2d vertex : vertecies) {
+                newVertecies.add(AllianceFlipUtil.flipToRed(vertex));
+            }
+            return new Zone(id, newVertecies);
+        }
     }
 
     public static enum WaypointFindingMode {
@@ -452,6 +488,7 @@ public class Pathing {
 
         private final Translation2d startPoint;
         private final Translation2d endPoint;
+        private final Rotation2d endRot;
         private final double pathAngleDegrees;
 
         // maps to help figure out which waypoint to pursue next
@@ -467,6 +504,7 @@ public class Pathing {
         private final List<Pose2d> poses = new ArrayList<>();
 
         public FullPath(List<WaypointContainer> subPaths, Rotation2d startRot, Rotation2d endRot) {
+            this.endRot = endRot;
             this.subPaths = subPaths;
             double subPathDistSoFar = 0.0;
             for (WaypointContainer subPath : subPaths) {
@@ -505,11 +543,23 @@ public class Pathing {
                 waypointsY.put(currTranslation.getY(), waypointIdx);
 
                 // path orientation check
-                if ((currTranslation.getX() < lastX) == goingEast) {
-                    xOrientedViable = false;
+                if (goingEast) {
+                    if (currTranslation.getX() < lastX) {
+                        xOrientedViable = false;
+                    }
+                } else {
+                    if (currTranslation.getX() > lastX) {
+                        xOrientedViable = false;
+                    }
                 }
-                if ((currTranslation.getY() < lastY) == goingNorth) {
-                    yOrientedViable = false;
+                if (goingNorth) {
+                    if (currTranslation.getY() < lastY) {
+                        yOrientedViable = false;
+                    }
+                } else {
+                    if (currTranslation.getY() > lastY) {
+                        yOrientedViable = false;
+                    }
                 }
                 lastX = currTranslation.getX();
                 lastY = currTranslation.getY();
@@ -528,6 +578,7 @@ public class Pathing {
 
                 waypointIdx++;
             }
+            waypointList.get(waypointList.size() - 1).setRotation(endRot);
 
             if (kSwerve.PREFER_X_ORIENTED_PATHS) {
                 if (xOrientedViable) {
@@ -679,10 +730,32 @@ public class Pathing {
                 return getWaypointTriangulated(currPose);
             }
         }
+
+        public Boolean hasFinished(Pose2d currPose, Double xyTolerance, Double radianTolerance) {
+            var deltaDist = currPose.getTranslation().getDistance(endPoint);
+            var deltaRot = Math.abs(currPose.getRotation().getRadians() - endRot.getRadians());
+            return deltaDist < xyTolerance && deltaRot < radianTolerance;
+        }
+    }
+
+    private static List<Zone> getZones() {
+        if (isRedAlliance()) {
+            return zonesRed;
+        } else {
+            return zonesBlue;
+        }
+    }
+
+    private static ConcurrentMap<Integer, ConcurrentMap<Integer, ZonePathSeg>> getZonePaths() {
+        if (isRedAlliance()) {
+            return zonePathsRed;
+        } else {
+            return zonePathsBlue;
+        }
     }
 
     public static Zone getEncapsulatingZone(Translation2d point) {
-        for (Zone zone : zones) {
+        for (Zone zone : getZones()) {
             if (zone.isInside(point)) {
                 return zone;
             }
@@ -700,7 +773,7 @@ public class Pathing {
         if (startZone == null || endZone == null) {
             return Optional.empty();
         }
-        var zonePathMap = zonePaths.get(startZone.getId());
+        var zonePathMap = getZonePaths().get(startZone.getId());
         if (zonePathMap == null) {
             return Optional.empty();
         }

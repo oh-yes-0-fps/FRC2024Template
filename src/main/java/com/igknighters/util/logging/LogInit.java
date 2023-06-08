@@ -28,7 +28,7 @@ public class LogInit {
     private static class SystemUsageLogging extends Thread {
         int refreshIntervalMili = 1000;//miliseconds
         int refreshIntervalNano = refreshIntervalMili * 1000000;//nanoseconds
-        NetworkTable table = NetworkTableInstance.getDefault().getTable("/SystemUsage");
+        public final NetworkTable table = NetworkTableInstance.getDefault().getTable("/SystemUsage");
 
         //memory usage
         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
@@ -134,7 +134,8 @@ public class LogInit {
         }
         idTable.getEntry("subsystems").setStringArray(subsystemNames);
 
-        new SystemUsageLogging();
+        var sysLogger = new SystemUsageLogging();
+        DataLogger.addNetworkTable(sysLogger.table);
     }
 
     public static void initDataLogger() {
@@ -150,7 +151,10 @@ public class LogInit {
 
         DataLog dataLog = DataLogManager.getLog();
         DriverStation.startDataLog(dataLog);
-        DataLogManager.logNetworkTables(true);
+        DataLogManager.logNetworkTables(false);
+        NetworkTableInstance nt = NetworkTableInstance.getDefault();
+        DataLog dl = DataLogManager.getLog();
+        nt.startConnectionDataLog(dl, "NTConnection");
     }
 
     public static void init() {

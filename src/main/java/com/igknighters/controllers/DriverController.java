@@ -1,11 +1,14 @@
 package com.igknighters.controllers;
 
+import com.igknighters.RobotState;
+import com.igknighters.RobotState.ControlAllocation;
 import com.igknighters.commands.swerve.AutoDriveDynamic;
 import com.igknighters.subsystems.Resources.Subsystems;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj2.command.Commands;
 
 public class DriverController extends ControllerParent {
 
@@ -15,11 +18,11 @@ public class DriverController extends ControllerParent {
 
         /// FACE BUTTONS
         this.A.binding = new SingleDepBinding(
-                Subsystems.Swerve,
-                (trigger, allSS) -> trigger.onTrue(
-                        new AutoDriveDynamic(allSS.swerve.get(),
-                            new Pose2d(new Translation2d(2.2, 1d), Rotation2d.fromDegrees(90d)))
-                ));
+            Subsystems.Swerve,
+            (trigger, allSS) -> trigger.onTrue(
+                Commands.run(
+                    () -> RobotState.postControlAllocation(ControlAllocation.Manual))
+            ));
 
         this.B.binding = new SingleDepBinding(
             Subsystems.Swerve,
@@ -34,7 +37,12 @@ public class DriverController extends ControllerParent {
                         new AutoDriveDynamic(allSS.swerve.get(),
                                 new Pose2d(new Translation2d(13.3, 6.6), Rotation2d.fromDegrees(90d)))));
 
-        // this.Y.binding =
+        this.Y.binding = new SingleDepBinding(
+            Subsystems.Swerve,
+            (trigger, allSS) -> trigger.onTrue(
+                Commands.run(
+                    () -> RobotState.postControlAllocation(ControlAllocation.Auto))
+            ));
 
         /// BUMPER
         // this.LB.binding =

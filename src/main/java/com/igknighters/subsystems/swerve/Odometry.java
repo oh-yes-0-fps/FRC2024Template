@@ -6,11 +6,15 @@ import com.igknighters.constants.RobotSetup;
 import com.igknighters.constants.ConstValues.kSwerve;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.igknighters.util.UtilPeriodic;
+import com.igknighters.util.field.FieldRegionUtil;
+import com.igknighters.util.field.FieldRegionUtil.FieldRegions;
 import com.igknighters.util.vision.DefinedRobotCameras;
 import com.igknighters.util.vision.VisionPoseEstimator;
 
@@ -39,6 +43,8 @@ public class Odometry extends Thread {
     // private final Pigeon2 pigeon;
     private final SwerveDrivePoseEstimator poseEstimator;
 
+    private Pose3d currentPose;
+
     private Odometry(SwerveModule[] modules, Pigeon2 pigeon, SwerveDrivePoseEstimator poseEstimator) {
         super("Odometry");
         this.modules = modules;
@@ -64,74 +70,82 @@ public class Odometry extends Thread {
             signal.setUpdateFrequency(200);
         }
 
-        if (Robot.isReal()) {
-            setDaemon(true);
-            start();
-        }
+        setDaemon(true);
+        start();
     }
 
     @Override
     public void run() {
         while (true) {
-            UtilPeriodic.startTimer("Odometry");
-            BaseStatusSignal.waitForAll(
-                0.1, allSignals.toArray(new BaseStatusSignal[0]));
-            double currentTime = Timer.getFPGATimestamp();
+            if (Robot.isReal()) {
+                UtilPeriodic.startTimer("Odometry");
+                BaseStatusSignal.waitForAll(
+                    0.1, allSignals.toArray(new BaseStatusSignal[0]));
+                double currentTime = Timer.getFPGATimestamp();
 
-            for (var module : modules) {
-                module.setRefreshTimestamp(currentTime);
-            }
+                for (var module : modules) {
+                    module.setRefreshTimestamp(currentTime);
+                }
 
-            SwerveModulePosition[] positions = new SwerveModulePosition[modules.length];
-            for (int i = 0; i < modules.length; i++) {
-                int idx = i * 4;
-                var drivePosition = allSignals.get(idx);
-                var driveVelocity = allSignals.get(idx + 1);
-                var steerPosition = allSignals.get(idx + 2);
-                var steerVelocity = allSignals.get(idx + 3);
-                var rot = Rotation2d.fromRotations(
+                SwerveModulePosition[] positions = new SwerveModulePosition[modules.length];
+                for (int i = 0; i < modules.length; i++) {
+                    int idx = i * 4;
+                    var drivePosition = allSignals.get(idx);
+                    var driveVelocity = allSignals.get(idx + 1);
+                    var steerPosition = allSignals.get(idx + 2);
+                    var steerVelocity = allSignals.get(idx + 3);
+                    var rot = Rotation2d.fromRotations(
+                        BaseStatusSignal.getLatencyCompensatedValue(
+                            steerPosition, steerVelocity));
+                    var meters = driveRotationsToMeters(
+                        BaseStatusSignal.getLatencyCompensatedValue(
+                            drivePosition, driveVelocity));
+                    positions[i] = new SwerveModulePosition(meters, rot);
+                }
+
+                double yawDegrees =
                     BaseStatusSignal.getLatencyCompensatedValue(
-                        steerPosition, steerVelocity));
-                var meters = driveRotationsToMeters(
-                    BaseStatusSignal.getLatencyCompensatedValue(
-                        drivePosition, driveVelocity));
-                positions[i] = new SwerveModulePosition(meters, rot);
+                            allSignals.get(16), allSignals.get(19));
+
+                double avgZ = 0.0;
+                double numEstimates = 0;
+                for (var estRoboPose : visionPoseEstimator.estimateCurrentPosition()) {
+                    avgZ += estRoboPose.estimatedPose.getTranslation().getZ();
+                    numEstimates++;
+                    poseEstimator.addVisionMeasurement(estRoboPose.estimatedPose.toPose2d(),
+                        estRoboPose.timestampSeconds);
+                }
+                avgZ /= numEstimates;
+
+                Pose2d p2d = poseEstimator.updateWithTime(
+                    currentTime, Rotation2d.fromDegrees(yawDegrees), positions);
+
+                Translation3d translation = new Translation3d(
+                    p2d.getX(), p2d.getY(), avgZ);
+                double degToRad = Math.PI / 180.0;
+                Rotation3d rotation = new Rotation3d(
+                    allSignals.get(17).getValue() * degToRad,
+                    allSignals.get(18).getValue() * degToRad,
+                    allSignals.get(16).getValue() * degToRad);
+                RobotState.postRoboPose(new Pose3d(translation, rotation));
+
+                var g = 9.8067;
+                var accel = new Translation3d(
+                    (allSignals.get(20).getValue() - allSignals.get(23).getValue()) * g,
+                    (allSignals.get(21).getValue() - allSignals.get(24).getValue()) * g,
+                    (allSignals.get(22).getValue() - allSignals.get(25).getValue()) * g);
+                RobotState.postAccelerationVector(accel);
+
+
+                var regionMap = FieldRegionUtil.getRegionMap(currentPose.toPose2d());
+                Set<FieldRegions> fully = regionMap.get(FieldRegionUtil.RegionEncloseType.Fully);
+                Set<FieldRegions> partially = regionMap.get(FieldRegionUtil.RegionEncloseType.Partially);
+                var both = new HashSet<>(fully);
+                both.addAll(partially);
+                RobotState.postCurrentRobotRegions(both);
+
+                UtilPeriodic.endTimer("Odometry");
             }
-
-            double yawDegrees =
-                BaseStatusSignal.getLatencyCompensatedValue(
-                        allSignals.get(16), allSignals.get(19));
-
-            double avgZ = 0.0;
-            double numEstimates = 0;
-            for (var estRoboPose : visionPoseEstimator.estimateCurrentPosition()) {
-                avgZ += estRoboPose.estimatedPose.getTranslation().getZ();
-                numEstimates++;
-                poseEstimator.addVisionMeasurement(estRoboPose.estimatedPose.toPose2d(),
-                    estRoboPose.timestampSeconds);
-            }
-            avgZ /= numEstimates;
-
-            Pose2d p2d = poseEstimator.updateWithTime(
-                currentTime, Rotation2d.fromDegrees(yawDegrees), positions);
-
-            Translation3d translation = new Translation3d(
-                p2d.getX(), p2d.getY(), avgZ);
-            double degToRad = Math.PI / 180.0;
-            Rotation3d rotation = new Rotation3d(
-                allSignals.get(17).getValue() * degToRad,
-                allSignals.get(18).getValue() * degToRad,
-                allSignals.get(16).getValue() * degToRad);
-            RobotState.postRoboPose(new Pose3d(translation, rotation));
-
-            var g = 9.8067;
-            var accel = new Translation3d(
-                (allSignals.get(20).getValue() - allSignals.get(23).getValue()) * g,
-                (allSignals.get(21).getValue() - allSignals.get(24).getValue()) * g,
-                (allSignals.get(22).getValue() - allSignals.get(25).getValue()) * g);
-            RobotState.postAccelerationVector(accel);
-
-            UtilPeriodic.endTimer("Odometry");
         }
     }
 }

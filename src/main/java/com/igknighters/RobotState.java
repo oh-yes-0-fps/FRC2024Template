@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.igknighters.constants.ConstValues;
 import com.igknighters.constants.FieldConstants;
 import com.igknighters.util.field.FieldRegionUtil.FieldRegions;
 
@@ -67,6 +68,7 @@ public class RobotState {
     private static Set<FieldRegions> robotCurrentRegions = new HashSet<>();
     private static Set<Pose2d> otherRobotPositions = new HashSet<>();
     private static Set<Pose2d> floorGamepiecePositions = new HashSet<>();
+    private static String currentTask = "None";
 
     public static class TimeStampedValue<T> {
         public final T value;
@@ -95,19 +97,22 @@ public class RobotState {
     public static synchronized void update() {
         // lock.lock();
         dsUpdate();
-        var nt = nt();
-        nt.getEntry("heldGamePiece").setString(heldGamePiece.toString());
-        nt.getEntry("desiredGamePiece").setString(desiredGamePiece.toString());
-        nt.getEntry("controlAllocation").setString(controlAllocation.toString());
-        nt.getEntry("dsMode").setString(dsMode.toString());
-        nt.getEntry("alliance").setString(alliance.toString());
-        nt.getEntry("matchTime").setDouble(matchTime);
-        nt.getEntry("robotPose").setString(robotPose.toPose2d().toString());
-        nt.getEntry("endEffectorTransform").setString(endEffectorTransform.toString());
-        nt.getEntry("accelerationVector").setString(accelerationVector.toString());
-        nt.getEntry("robotCurrentRegions").setString(robotCurrentRegions.toString());
-        nt.getEntry("otherRobotPositions").setString(otherRobotPositions.toString());
-        nt.getEntry("floorGamepiecePositions").setString(floorGamepiecePositions.toString());
+        if (ConstValues.DEBUG) {
+            var nt = nt();
+            //super slow because of all the string formats
+            nt.getEntry("heldGamePiece").setString(heldGamePiece.toString());
+            nt.getEntry("desiredGamePiece").setString(desiredGamePiece.toString());
+            nt.getEntry("controlAllocation").setString(controlAllocation.toString());
+            nt.getEntry("dsMode").setString(dsMode.toString());
+            nt.getEntry("alliance").setString(alliance.toString());
+            nt.getEntry("matchTime").setDouble(matchTime);
+            nt.getEntry("robotPose").setString(robotPose.toPose2d().toString());
+            // nt.getEntry("endEffectorTransform").setString(endEffectorTransform.toString());
+            nt.getEntry("accelerationVector").setString(accelerationVector.toString());
+            nt.getEntry("robotCurrentRegions").setString(robotCurrentRegions.toString());
+            nt.getEntry("otherRobotPositions").setString(otherRobotPositions.toString());
+            nt.getEntry("floorGamepiecePositions").setString(floorGamepiecePositions.toString());
+        }
         // lock.unlock();
     }
 
@@ -167,6 +172,13 @@ public class RobotState {
         // lock.lock();
         RobotState.robotCurrentRegions = regions;
         postTimestamp("robotCurrentRegions");
+        // lock.unlock();
+    }
+
+    public static synchronized void postCurrentTask(String task) {
+        // lock.lock();
+        RobotState.currentTask = task;
+        postTimestamp("currentTask");
         // lock.unlock();
     }
 

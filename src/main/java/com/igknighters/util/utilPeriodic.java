@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.igknighters.constants.ConstValues;
 import com.igknighters.util.logging.BootupLogger;
+import com.igknighters.util.logging.DataLogger;
 
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.networktables.NetworkTable;
@@ -23,8 +24,9 @@ public class UtilPeriodic {
     private static final NetworkTable periodicTimesTable = NetworkTableInstance.getDefault().getTable("PeriodicTimes");
     static {
         if (ConstValues.DEBUG) {
-            periodicTimesTable.getEntry("_").setString("Times are measured in miliseconds");
+            periodicTimesTable.getEntry("$").setString("Times are measured in miliseconds");
         }
+        DataLogger.addNetworkTable(periodicTimesTable);
     }
 
     public static void addCallback(TimedRobot robot) {

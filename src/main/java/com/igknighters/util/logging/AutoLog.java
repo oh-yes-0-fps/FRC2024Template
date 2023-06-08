@@ -35,14 +35,6 @@ public class AutoLog {
             "AutologSmartDashboard", () -> smartdashboardRunnables.forEach(Runnable::run), Frequency.EveryOtherCycle);
     }
 
-    /**
-     * When debug is false and shuffleboard are redirected to datalog
-     * if true the datalog path will be kept under NT/Shuffleboard/.../.../...
-     * Beneficial for automatic analysis of logs not needing to look 2 places
-     */
-    private static final boolean datalogKeepsShuffleboardPath = true;
-    private static final String shuffleboardDLpath = "NT/Shuffleboard/";
-
     private static String camelToNormal(String camelCase) {
         StringBuilder sb = new StringBuilder();
         for (char c : camelCase.toCharArray()) {
@@ -386,13 +378,7 @@ public class AutoLog {
         if (ConstValues.DEBUG) {
             ShuffleboardApi.getTab(ss_name).addSendable(ss_name, (SubsystemBase) subsystem);
         } else {
-            String pathPrefix;
-            if (datalogKeepsShuffleboardPath) {
-                pathPrefix = shuffleboardDLpath + "/" + ss_name;
-            } else {
-                pathPrefix = "";
-            }
-            DataLogger.addSendable((SubsystemBase) subsystem, pathPrefix, ss_name);
+            DataLogger.addSendable((SubsystemBase) subsystem, ss_name, ss_name);
         }
         for (Field field : subsystem.getClass().getDeclaredFields()) {
             if (field.getAnnotations().length == 0) {
@@ -533,14 +519,14 @@ public class AutoLog {
                             shuffleboardWidgetHelper(getSupplier(field, subsystem), type, name, ss_name, annotation);
                         }
                     } else {
-                        String path = "";
-                        if (datalogKeepsShuffleboardPath) {
-                            path = shuffleboardDLpath + ss_name + "/" + name;
-                        } else {
-                            path = ss_name + "/" + name;
-                        }
+                        String path = ss_name + "/" + name;
                         if (type == DataType.Sendable) {
-                            DataLogger.addSendable((Sendable) getSupplier(field, subsystem).get(), path, name);
+                            var obj = getSupplier(field, subsystem).get();
+                            if (obj instanceof NTSendable) {
+                                DataLogger.addSendable((NTSendable) obj, ss_name, name);
+                            } else if (obj instanceof Sendable) {
+                                DataLogger.addSendable((Sendable) obj, ss_name, name);
+                            }
                         } else {
                             dataLoggerHelper(getSupplier(field, subsystem), type, path, false);
                         }
@@ -594,12 +580,7 @@ public class AutoLog {
                 if (ConstValues.DEBUG) {
                     shuffleboardWidgetHelper(getSupplier(method, subsystem), type, name, ss_name, annotation);
                 } else {
-                    String path = "";
-                    if (datalogKeepsShuffleboardPath) {
-                        path = shuffleboardDLpath + ss_name + "/" + name;
-                    } else {
-                        path = ss_name + "/" + name;
-                    }
+                    String path = ss_name + "/" + name;
                     dataLoggerHelper(getSupplier(method, subsystem), type, path, false);
                 }
                 loggerPort = "Shuffleboard";

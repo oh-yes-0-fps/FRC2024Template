@@ -9,6 +9,7 @@ import com.igknighters.commands.tasks.CommunityScoreCmd;
 import com.igknighters.commands.tasks.LoadingPickupCmd;
 import com.igknighters.commands.tasks.TravelToCommunityCmd;
 import com.igknighters.commands.tasks.TravelToLoadingCmd;
+import com.igknighters.constants.ConstValues;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -53,12 +54,16 @@ public enum Task {
 
     public static void taskScheduled(Task task) {
         taskCurrentlyRunning = true;
-        RobotState.nt().getEntry("CurrentTask").setString(task.name());
+        if (ConstValues.DEBUG) {
+            RobotState.nt().getEntry("CurrentTask").setString(task.name());
+        }
     }
 
     public static void taskFinished() {
         taskCurrentlyRunning = false;
-        RobotState.nt().getEntry("CurrentTask").setString("None");
+        if (ConstValues.DEBUG) {
+            RobotState.nt().getEntry("CurrentTask").setString("None");
+        }
     }
 
     public static Boolean isTaskRunning() {

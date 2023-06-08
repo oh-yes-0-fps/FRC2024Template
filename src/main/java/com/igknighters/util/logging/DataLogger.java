@@ -1,5 +1,12 @@
 package com.igknighters.util.logging;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.networktables.NTSendable;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.datalog.*;
@@ -13,10 +20,15 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.igknighters.util.UtilPeriodic;
+import com.igknighters.util.logging.customLogEntries.Pose2dLogEntry;
+import com.igknighters.util.logging.customLogEntries.Pose3dLogEntry;
+import com.igknighters.util.logging.customLogEntries.Rotation2dLogEntry;
+import com.igknighters.util.logging.customLogEntries.Rotation3dLogEntry;
+import com.igknighters.util.logging.customLogEntries.Translation2dLogEntry;
+import com.igknighters.util.logging.customLogEntries.Translation3dLogEntry;
 
 public class DataLogger {
-    private DataLogger() {
-    }
+    private DataLogger() {}
 
     private static final Map<DataLogEntry, Supplier<?>> dataLogMap = new HashMap<>();
     private static final Collection<DataLogSendableBuilder> sendables = new LinkedHashSet<>();
@@ -66,6 +78,30 @@ public class DataLogger {
         new StringLogEntry(log, entryName).append(value);
     }
 
+    public static void oneShotTranslation2d(String entryName, Translation2d value) {
+        new Translation2dLogEntry(log, entryName).append(value);
+    }
+
+    public static void oneShotTranslation3d(String entryName, Translation3d value) {
+        new Translation3dLogEntry(log, entryName).append(value);
+    }
+
+    public static void oneShotRotation2d(String entryName, Rotation2d value) {
+        new Rotation2dLogEntry(log, entryName).append(value);
+    }
+
+    public static void oneShotRotation3d(String entryName, Rotation3d value) {
+        new Rotation3dLogEntry(log, entryName).append(value);
+    }
+
+    public static void oneShotPose2d(String entryName, Pose2d value) {
+        new Pose2dLogEntry(log, entryName).append(value);
+    }
+
+    public static void oneShotPose3d(String entryName, Pose3d value) {
+        new Pose3dLogEntry(log, entryName).append(value);
+    }
+
     public static void addBooleanArray(String entryName, Supplier<boolean[]> valueSupplier) {
         dataLogMap.put(new BooleanArrayLogEntry(log, entryName), valueSupplier);
     }
@@ -110,6 +146,30 @@ public class DataLogger {
         dataLogMap.put(new StringLogEntry(log, entryName), valueSupplier);
     }
 
+    public static void addTranslation2d(String entryName, Supplier<Translation2d> valueSupplier) {
+        dataLogMap.put(new Translation2dLogEntry(log, entryName), valueSupplier);
+    }
+
+    public static void addTranslation3d(String entryName, Supplier<Translation3d> valueSupplier) {
+        dataLogMap.put(new Translation3dLogEntry(log, entryName), valueSupplier);
+    }
+
+    public static void addRotation2d(String entryName, Supplier<Rotation2d> valueSupplier) {
+        dataLogMap.put(new Rotation2dLogEntry(log, entryName), valueSupplier);
+    }
+
+    public static void addRotation3d(String entryName, Supplier<Rotation3d> valueSupplier) {
+        dataLogMap.put(new Rotation3dLogEntry(log, entryName), valueSupplier);
+    }
+
+    public static void addPose2d(String entryName, Supplier<Pose2d> valueSupplier) {
+        dataLogMap.put(new Pose2dLogEntry(log, entryName), valueSupplier);
+    }
+
+    public static void addPose3d(String entryName, Supplier<Pose3d> valueSupplier) {
+        dataLogMap.put(new Pose3dLogEntry(log, entryName), valueSupplier);
+    }
+
     public static void addCustom(DataLogEntry entry, Supplier<?> valueSupplier) {
         dataLogMap.put(entry, valueSupplier);
     }
@@ -136,10 +196,25 @@ public class DataLogger {
         sendables.add(builder);
     }
 
+    public static void addSendable(NTSendable sendable, String pathPrefix, String name) {
+        String prefix;
+        if (!pathPrefix.endsWith("/")) {
+            prefix = pathPrefix + "/" + name + "/";
+        } else {
+            prefix = pathPrefix + name + "/";
+        }
+        
+        var builder = new DataLogSendableBuilder(prefix);
+        sendable.initSendable(builder);
+        sendables.add(builder);
+    }
+
     public static void update() {
         for (Map.Entry<DataLogEntry, Supplier<?>> entry : dataLogMap.entrySet()) {
             var key = entry.getKey();
             var val = entry.getValue().get();
+            //could do `key.kDatatype` and compare using that
+            //but supposedly this is comparable
             if (key instanceof BooleanArrayLogEntry) {
                 ((BooleanArrayLogEntry) key).append((boolean[]) val);
 
@@ -172,6 +247,25 @@ public class DataLogger {
 
             } else if (key instanceof StringLogEntry) {
                 ((StringLogEntry) key).append((String) val);
+
+            } else if (key instanceof Translation2dLogEntry) {
+                ((Translation2dLogEntry) key).append((Translation2d) val);
+
+            } else if (key instanceof Translation3dLogEntry) {
+                ((Translation3dLogEntry) key).append((Translation3d) val);
+
+            } else if (key instanceof Rotation2dLogEntry) {
+                ((Rotation2dLogEntry) key).append((Rotation2d) val);
+
+            } else if (key instanceof Rotation3dLogEntry) {
+                ((Rotation3dLogEntry) key).append((Rotation3d) val);
+
+            } else if (key instanceof Pose2dLogEntry) {
+                ((Pose2dLogEntry) key).append((Pose2d) val);
+
+            } else if (key instanceof Pose3dLogEntry) {
+                ((Pose3dLogEntry) key).append((Pose3d) val);
+
             }
         }
         sendables.forEach(DataLogSendableBuilder::update);

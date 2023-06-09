@@ -20,7 +20,7 @@ public class DriverController extends ControllerParent {
         this.A.binding = new SingleDepBinding(
             Subsystems.Swerve,
             (trigger, allSS) -> trigger.onTrue(
-                Commands.run(
+                Commands.runOnce(
                     () -> RobotState.postControlAllocation(ControlAllocation.Manual))
             ));
 
@@ -40,7 +40,7 @@ public class DriverController extends ControllerParent {
         this.Y.binding = new SingleDepBinding(
             Subsystems.Swerve,
             (trigger, allSS) -> trigger.onTrue(
-                Commands.run(
+                Commands.runOnce(
                     () -> RobotState.postControlAllocation(ControlAllocation.Auto))
             ));
 

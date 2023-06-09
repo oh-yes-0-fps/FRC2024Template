@@ -25,5 +25,6 @@ public class TaskScheduler {
         } else if (lastAllocation == ControlAllocation.Auto) {
             Task.cancelTasks();
         }
+        lastAllocation = RobotState.queryControlAllocation().value;
     }
 }

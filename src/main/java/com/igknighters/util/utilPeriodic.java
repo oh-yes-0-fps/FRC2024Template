@@ -45,14 +45,14 @@ public class UtilPeriodic {
                 periodicRunnables.get(key).run();
                 endTimer(key);
             }
-            //sum up all doubles in periodicTimesTable
-            double total = 0;
-            for (var entry : periodicTimesTable.getKeys()) {
-                if (!entry.equals("TOTAL")) {
-                    total += periodicTimesTable.getEntry(entry).getDouble(0);
-                }
-            }
-            periodicTimesTable.getEntry("TOTAL").setDouble(total);
+            // // sum up all doubles in periodicTimesTable
+            // double total = 0;
+            // for (var entry : periodicTimesTable.getKeys()) {
+            //     if (!entry.equals("TOTAL")) {
+            //         total += periodicTimesTable.getEntry(entry).getDouble(0);
+            //     }
+            // }
+            // periodicTimesTable.getEntry("TOTAL").setDouble(total);
         } else {
             periodicRunnables.values().forEach(Runnable::run);
         }
@@ -73,7 +73,7 @@ public class UtilPeriodic {
         }
         double timeTakenMs = (time() - times.get(key)) * 1000;
         periodicTimesTable.getEntry(key).setDouble(
-            avgTimes.get(key).calculate(timeTakenMs));
+                avgTimes.get(key).calculate(timeTakenMs));
         times.remove(key);
     }
 

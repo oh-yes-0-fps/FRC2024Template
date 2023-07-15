@@ -80,7 +80,7 @@ public class Odometry extends Thread {
             if (Robot.isReal()) {
                 UtilPeriodic.startTimer("Odometry");
                 BaseStatusSignal.waitForAll(
-                    0.1, allSignals.toArray(new BaseStatusSignal[0]));
+                    0.05, allSignals.toArray(new BaseStatusSignal[0]));
                 double currentTime = Timer.getFPGATimestamp();
 
                 for (var module : modules) {

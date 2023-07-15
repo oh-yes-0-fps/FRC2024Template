@@ -56,7 +56,7 @@ public class TalonFXv6Wrapper extends MotorWrapper {
     private Double kp, kd, ki = 0d;
 
     public TalonFXv6Wrapper(int canID, String canBus, boolean enabled) {
-        super(ApiType.CTREv5, canID, canBus, enabled);
+        super(ApiType.CTREv6, canID, canBus, enabled);
         if (enabled) {
             this.motor = new TalonFX(canID, canBus);
             this.sim = this.motor.getSimState();

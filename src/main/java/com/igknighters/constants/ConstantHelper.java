@@ -98,14 +98,28 @@ public class ConstantHelper {
     public @interface NTIgnore {
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.TYPE, ElementType.FIELD })
+    public @interface NTPreferenceConst {
+        String value() default "";
+    }
+
     public static void handleConstField(Field field, Class<?> obj, Optional<NetworkTable> rootTable, boolean tunable) {
-        field.setAccessible(true);
         if (field.getAnnotations().length == 0) {
             return;
         }
+        field.setAccessible(true);
         boolean fieldIgnoreNT = field.isAnnotationPresent(NTIgnore.class) || !rootTable.isPresent();
         boolean isTunable = (tunable && !field.isAnnotationPresent(TunableIgnore.class));
+        boolean isNTPref = field.isAnnotationPresent(NTPreferenceConst.class);
         RobotConstID constID = RobotSetup.getRobotID().constID;
+
+        //this annotation combo makes no sense
+        if (fieldIgnoreNT && isNTPref) {
+            throw new IllegalArgumentException("Cannot have both NTIgnore and NTPreferenceConst on the same field: " + field.getName());
+        }
+
+        //handle robot dependent constants
         if (field.isAnnotationPresent(IntConst.class)) {
             try {
                 IntConst annotation = field.getAnnotation(IntConst.class);
@@ -203,7 +217,29 @@ public class ConstantHelper {
                 e.printStackTrace();
             }
         }
-        if ((field.getType().isPrimitive() || field.getType() == String.class) && !fieldIgnoreNT) {
+
+        //makes sure its an NT supported type
+        var type = field.getType();
+        if (type.isArray()) {
+            type = type.getComponentType();
+        }
+        if (!(type.isPrimitive() || type == String.class)) {
+            return;
+        }
+
+        if (isNTPref) {
+            var annotation = field.getAnnotation(NTPreferenceConst.class);
+            NetworkTableEntry entry;
+            if (annotation.value().length() > 0) {
+                entry = NetworkTableInstance.getDefault().getEntry(annotation.value());
+            } else {
+                entry = rootTable.get().getEntry(field.getName());
+            }
+
+        }
+
+        //handle network table interactivity
+        if (!fieldIgnoreNT) {
             NetworkTableEntry entry = rootTable.get().getEntry(field.getName());
             try {
                 entry.setValue(field.get(obj));
@@ -213,15 +249,23 @@ public class ConstantHelper {
             if (isTunable) {
                 TunableValuesAPI.addTunableRunnable(() -> {
                     try {
-                        Class<?> type = field.getType();
-                        if (type == int.class) {
+                        Class<?> local_type = field.getType();
+                        if (local_type == int.class) {
                             field.setInt(obj, (int) entry.getInteger(0));
-                        } else if (type == double.class) {
+                        } else if (local_type == double.class) {
                             field.setDouble(obj, entry.getDouble(0));
-                        } else if (type == String.class) {
+                        } else if (local_type == String.class) {
                             field.set(obj, entry.getString(""));
-                        } else if (type == boolean.class) {
+                        } else if (local_type == boolean.class) {
                             field.setBoolean(obj, entry.getBoolean(false));
+                        } else if (local_type == int[].class) {
+                            field.set(obj, entry.getIntegerArray(new long[0]));
+                        } else if (local_type == double[].class) {
+                            field.set(obj, entry.getDoubleArray(new double[0]));
+                        } else if (local_type == String[].class) {
+                            field.set(obj, entry.getStringArray(new String[0]));
+                        } else if (local_type == boolean[].class) {
+                            field.set(obj, entry.getBooleanArray(new boolean[0]));
                         }
                     } catch (IllegalAccessException e) {
                         DriverStation.reportError("Error setting value for " + obj.getName() + "." + field.getName(),

@@ -32,5 +32,4 @@ public class ManualDrive extends CommandBase {
         var rotation = rotationSupplier.getAsDouble();
         swerve.pursueDriverInput(normalizedTranslation, rotation);
     }
-
 }

@@ -86,10 +86,11 @@ public class SwerveModule implements Sendable {
         angleConfigs.MotorOutput.Inverted = kSwerve.INVERT_ANGLE_MOTORS
                 ? InvertedValue.Clockwise_Positive
                 : InvertedValue.CounterClockwise_Positive;
-        angleConfigs.ClosedLoopGeneral.ContinuousWrap = true;
         angleConfigs.Feedback.FeedbackRemoteSensorID = encoderId;
         angleConfigs.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
         angleConfigs.Feedback.RotorToSensorRatio = kSwerve.ANGLE_GEAR_RATIO;
+        angleConfigs.Feedback.SensorToMechanismRatio = 1.0;
+        angleConfigs.ClosedLoopGeneral.ContinuousWrap = true;
         angleMotor.getConfigurator().apply(angleConfigs);
 
         CANcoderConfiguration cancoderConfigs = new CANcoderConfiguration();

@@ -114,7 +114,7 @@ public class Resources {
         }
     }
 
-    public interface TestableSubsystem  extends Subsystem{
+    public interface TestableSubsystem  extends Subsystem {
 
         default public void testInit() {
             return;

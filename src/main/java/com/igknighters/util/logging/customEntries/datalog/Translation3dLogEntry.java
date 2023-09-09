@@ -1,4 +1,4 @@
-package com.igknighters.util.logging.customLogEntries;
+package com.igknighters.util.logging.customEntries.datalog;
 
 import com.igknighters.util.math.GeomPacker;
 

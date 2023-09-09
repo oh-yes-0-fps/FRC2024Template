@@ -1,7 +1,9 @@
 package com.igknighters.util.testing;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 
 import com.igknighters.constants.ConstValues;
 import com.igknighters.util.UtilPeriodic;
@@ -11,9 +13,12 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class TunableValuesAPI {
+
+
     private static final Collection<Runnable> tunableRunnables = new LinkedHashSet<>();
     private static final NetworkTable tunableNetworkTable = NetworkTableInstance.getDefault()
             .getTable("TunableValues");
+    private static final Map<String, Collection<Runnable>> tunableGroupMap = new HashMap<>();
 
     /** Expect anywhere from 20-120ms latency due to the segment optimization */
     public static void addTunableRunnable(Runnable runnable) {

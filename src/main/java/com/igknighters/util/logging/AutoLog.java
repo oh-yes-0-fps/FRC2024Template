@@ -30,9 +30,14 @@ import edu.wpi.first.util.sendable.Sendable;
 public class AutoLog {
 
     private static final Collection<Runnable> smartdashboardRunnables = new LinkedHashSet<>();
+
+    //initialize the smartdashboard updater
     static {
         UtilPeriodic.addPeriodicRunnable(
-            "AutologSmartDashboard", () -> smartdashboardRunnables.forEach(Runnable::run), Frequency.EveryOtherCycle);
+            "AutologSmartDashboard",
+            () -> smartdashboardRunnables.forEach(Runnable::run),
+            Frequency.EveryOtherCycle
+        );
     }
 
     private static String camelToNormal(String camelCase) {
@@ -47,6 +52,12 @@ public class AutoLog {
         return sb.toString();
     }
 
+    /**
+     * Removes 'get' from start of method name and removes getter from end of method
+     * name, also makes first letter lowercase
+     * @param name of method
+     * @return adjusted name
+     */
     private static String methodNameFix(String name) {
         if (name.startsWith("get")) {
             name = name.substring(3);
@@ -58,7 +69,7 @@ public class AutoLog {
     }
 
     /** Subsystem Logging */
-    public static class AL { // yes ik ssl is already a tech name but i dont care
+    public static class AL {
         /**
          * Annotate a field or method IN A SUBSYSTEM with this to log it to shuffleboard
          * 
@@ -122,10 +133,17 @@ public class AutoLog {
          * Can be used in combination with '@{@link Shuffleboard}' to post to Shuffleboard
          * and '@{@link SmartDashboard}' to post to SmartDashboard <p>
          * If used by itself will be sent to the TunableValues networktable
+         * 
+         * Can be assigned to groups, this will allow better propagation of changes,
+         * when a field in a group is changed any method in the same group will be called
+         * @param group [optional] a single group declaration (just appends to groups if both present)
+         * @param groups [optional] multiple group declarations
          */
         @Retention(RetentionPolicy.RUNTIME)
         @Target({ ElementType.FIELD })
         public @interface Tunable {
+            public String group() default "";
+            public String[] groups() default {};
         }
     }
 
@@ -453,6 +471,10 @@ public class AutoLog {
                         }
                     });
                     loggerPort = "Shuffleboard";
+                }
+                if (field.isAnnotationPresent(AL.DataLog.class)) {
+                    throw new IllegalArgumentException(
+                            "Cannot have both Tunable and DataLog annotations: " + ss_name + "." + f_name);
                 }
                 if (loggerPort == "") {
                     var entry = TunableValuesAPI.getTunableNTEntry(ss_name, f_name,

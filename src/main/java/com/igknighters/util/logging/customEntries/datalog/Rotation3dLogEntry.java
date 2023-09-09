@@ -1,31 +1,31 @@
-package com.igknighters.util.logging.customLogEntries;
+package com.igknighters.util.logging.customEntries.datalog;
 
 import com.igknighters.util.math.GeomPacker;
 
-import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.util.datalog.DataLogEntry;
 
 /**
- * Sends a Pose3d to the log and an array of doubles.
- * [X, Y, Z, Roll, Pitch, Yaw]
+ * Sends a Rotation3d to the log and a double.
+ * [ Roll, Pitch, Yaw ]
  */
-public class Pose3dLogEntry extends DataLogEntry {
-    public static final String kDataType = "Pose3d";
-    
-    public Pose3dLogEntry(DataLog log, String name, String metadata, long timestamp) {
+public class Rotation3dLogEntry extends DataLogEntry {
+    public static final String kDataType = "Rotation3d";
+
+    public Rotation3dLogEntry(DataLog log, String name, String metadata, long timestamp) {
         super(log, name, kDataType, metadata, timestamp);
     }
 
-    public Pose3dLogEntry(DataLog log, String name, String metadata) {
+    public Rotation3dLogEntry(DataLog log, String name, String metadata) {
         this(log, name, metadata, 0);
     }
 
-    public Pose3dLogEntry(DataLog log, String name, long timestamp) {
+    public Rotation3dLogEntry(DataLog log, String name, long timestamp) {
         this(log, name, "", timestamp);
     }
 
-    public Pose3dLogEntry(DataLog log, String name) {
+    public Rotation3dLogEntry(DataLog log, String name) {
         this(log, name, 0);
     }
 
@@ -35,7 +35,7 @@ public class Pose3dLogEntry extends DataLogEntry {
      * @param value Value to record
      * @param timestamp Time stamp (0 to indicate now)
      */
-    public void append(Pose3d value, long timestamp) {
+    public void append(Rotation3d value, long timestamp) {
         m_log.appendDoubleArray(m_entry, GeomPacker.pack(value), timestamp);
     }
 
@@ -44,7 +44,7 @@ public class Pose3dLogEntry extends DataLogEntry {
      *
      * @param value Value to record
      */
-    public void append(Pose3d value) {
+    public void append(Rotation3d value) {
         m_log.appendDoubleArray(m_entry, GeomPacker.pack(value), 0);
     }
 }

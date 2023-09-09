@@ -20,12 +20,12 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.igknighters.util.UtilPeriodic;
-import com.igknighters.util.logging.customLogEntries.Pose2dLogEntry;
-import com.igknighters.util.logging.customLogEntries.Pose3dLogEntry;
-import com.igknighters.util.logging.customLogEntries.Rotation2dLogEntry;
-import com.igknighters.util.logging.customLogEntries.Rotation3dLogEntry;
-import com.igknighters.util.logging.customLogEntries.Translation2dLogEntry;
-import com.igknighters.util.logging.customLogEntries.Translation3dLogEntry;
+import com.igknighters.util.logging.customEntries.datalog.Pose2dLogEntry;
+import com.igknighters.util.logging.customEntries.datalog.Pose3dLogEntry;
+import com.igknighters.util.logging.customEntries.datalog.Rotation2dLogEntry;
+import com.igknighters.util.logging.customEntries.datalog.Rotation3dLogEntry;
+import com.igknighters.util.logging.customEntries.datalog.Translation2dLogEntry;
+import com.igknighters.util.logging.customEntries.datalog.Translation3dLogEntry;
 
 public class DataLogger {
     private DataLogger() {}

@@ -227,16 +227,16 @@ public class ConstantHelper {
             return;
         }
 
-        if (isNTPref) {
-            var annotation = field.getAnnotation(NTPreferenceConst.class);
-            NetworkTableEntry entry;
-            if (annotation.value().length() > 0) {
-                entry = NetworkTableInstance.getDefault().getEntry(annotation.value());
-            } else {
-                entry = rootTable.get().getEntry(field.getName());
-            }
+        // if (isNTPref) {
+        //     var annotation = field.getAnnotation(NTPreferenceConst.class);
+        //     NetworkTableEntry entry;
+        //     if (annotation.value().length() > 0) {
+        //         entry = NetworkTableInstance.getDefault().getEntry(annotation.value());
+        //     } else {
+        //         entry = rootTable.get().getEntry(field.getName());
+        //     }
 
-        }
+        // }
 
         //handle network table interactivity
         if (!fieldIgnoreNT) {
@@ -248,6 +248,7 @@ public class ConstantHelper {
             }
             if (isTunable) {
                 TunableValuesAPI.addTunableRunnable(() -> {
+                    entry.getLastChange();
                     try {
                         Class<?> local_type = field.getType();
                         if (local_type == int.class) {

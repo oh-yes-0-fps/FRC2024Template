@@ -14,14 +14,14 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilderImpl;
 
 /**Lighter weight interface for shuffleboard widgets */
-public class McqShuffleboardApi {
+public class ShuffleboardApi {
     private static final NetworkTable shuffleboardNetworkTable = NetworkTableInstance.getDefault().getTable("Shuffleboard");
     private static final NetworkTable metaNetworkTable = shuffleboardNetworkTable.getSubTable(".metadata");
     private static final NetworkTableEntry tabsEntry = metaNetworkTable.getEntry("Tabs");
     private static final Map<sbPath, ShuffleTable> tables = new HashMap<>();
     private static final Map<String, Runnable> tasks = new HashMap<>();
     static {
-        UtilPeriodic.addPeriodicRunnable("McqShuffleboard", () -> tasks.values().forEach(Runnable::run));
+        UtilPeriodic.addPeriodicRunnable("Shuffleboard", () -> tasks.values().forEach(Runnable::run));
     }
 
     private static class sbPath {
@@ -98,6 +98,7 @@ public class McqShuffleboardApi {
             this.metaTable = metaNetworkTable.getSubTable(path.get(1));
             table.getEntry(".type").setString("ShuffleboardTab");
             tables.put(path, this);
+            DataLogger.addNetworkTable(this.table, name);
         }
 
         public ShuffleEntry addEntry(String name, Object value) {

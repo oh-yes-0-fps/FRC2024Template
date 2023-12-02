@@ -16,9 +16,10 @@ import java.util.function.Supplier;
 import com.igknighters.constants.ConstValues;
 import com.igknighters.util.UtilPeriodic;
 import com.igknighters.util.testing.TunableValuesAPI;
-import com.igknighters.util.logging.McqShuffleboardApi.MetadataFields;
+import com.igknighters.util.logging.ShuffleboardApi.MetadataFields;
 import com.igknighters.util.UtilPeriodic.Frequency;
 
+import edu.wpi.first.networktables.NTSendable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -29,18 +30,15 @@ import edu.wpi.first.util.sendable.Sendable;
 public class AutoLog {
 
     private static final Collection<Runnable> smartdashboardRunnables = new LinkedHashSet<>();
+
+    //initialize the smartdashboard updater
     static {
         UtilPeriodic.addPeriodicRunnable(
-            "AutologSmartDashboard", () -> smartdashboardRunnables.forEach(Runnable::run), Frequency.EveryOtherCycle);
+            "AutologSmartDashboard",
+            () -> smartdashboardRunnables.forEach(Runnable::run),
+            Frequency.EveryOtherCycle
+        );
     }
-
-    /**
-     * When debug is false and shuffleboard are redirected to datalog
-     * if true the datalog path will be kept under NT/Shuffleboard/.../.../...
-     * Beneficial for automatic analysis of logs not needing to look 2 places
-     */
-    private static final boolean datalogKeepsShuffleboardPath = true;
-    private static final String shuffleboardDLpath = "NT/Shuffleboard/";
 
     private static String camelToNormal(String camelCase) {
         StringBuilder sb = new StringBuilder();
@@ -54,6 +52,12 @@ public class AutoLog {
         return sb.toString();
     }
 
+    /**
+     * Removes 'get' from start of method name and removes getter from end of method
+     * name, also makes first letter lowercase
+     * @param name of method
+     * @return adjusted name
+     */
     private static String methodNameFix(String name) {
         if (name.startsWith("get")) {
             name = name.substring(3);
@@ -65,7 +69,7 @@ public class AutoLog {
     }
 
     /** Subsystem Logging */
-    public static class AL { // yes ik ssl is already a tech name but i dont care
+    public static class AL {
         /**
          * Annotate a field or method IN A SUBSYSTEM with this to log it to shuffleboard
          * 
@@ -129,10 +133,17 @@ public class AutoLog {
          * Can be used in combination with '@{@link Shuffleboard}' to post to Shuffleboard
          * and '@{@link SmartDashboard}' to post to SmartDashboard <p>
          * If used by itself will be sent to the TunableValues networktable
+         * 
+         * Can be assigned to groups, this will allow better propagation of changes,
+         * when a field in a group is changed any method in the same group will be called
+         * @param group [optional] a single group declaration (just appends to groups if both present)
+         * @param groups [optional] multiple group declarations
          */
         @Retention(RetentionPolicy.RUNTIME)
         @Target({ ElementType.FIELD })
         public @interface Tunable {
+            public String group() default "";
+            public String[] groups() default {};
         }
     }
 
@@ -151,7 +162,7 @@ public class AutoLog {
         public static DataType fromClass(Class<?> clazz) throws IllegalArgumentException {
             // if clazz has Sendable interace
             for (Class<?> cls : clazz.getInterfaces()) {
-                if (cls.equals(Sendable.class)) {
+                if (cls.equals(Sendable.class) || cls.equals(NTSendable.class)) {
                     return Sendable;
                 }
             }
@@ -366,7 +377,7 @@ public class AutoLog {
 
     private static void shuffleboardWidgetHelper(Supplier<?> supplier, DataType type, String f_name, String ss_name,
             AL.Shuffleboard annotation) {
-        McqShuffleboardApi.ShuffleEntry entry = McqShuffleboardApi.getTab(ss_name).addEntry(f_name, supplier);
+        ShuffleboardApi.ShuffleEntry entry = ShuffleboardApi.getTab(ss_name).addEntry(f_name, supplier);
         Map<MetadataFields, Object> metadata = new HashMap<>();
         if (annotation.pos().length > 0) {
             metadata.put(MetadataFields.Position, new double[] { annotation.pos()[0], annotation.pos()[1] });
@@ -383,15 +394,9 @@ public class AutoLog {
     public static void setupSubsystemLogging(Subsystem subsystem) {
         String ss_name = subsystem.getClass().getSimpleName();
         if (ConstValues.DEBUG) {
-            McqShuffleboardApi.getTab(ss_name).addSendable(ss_name, (SubsystemBase) subsystem);
+            ShuffleboardApi.getTab(ss_name).addSendable(ss_name, (SubsystemBase) subsystem);
         } else {
-            String pathPrefix;
-            if (datalogKeepsShuffleboardPath) {
-                pathPrefix = shuffleboardDLpath + "/" + ss_name;
-            } else {
-                pathPrefix = "";
-            }
-            DataLogger.addSendable((SubsystemBase) subsystem, pathPrefix, ss_name);
+            DataLogger.addSendable((SubsystemBase) subsystem, ss_name, ss_name);
         }
         for (Field field : subsystem.getClass().getDeclaredFields()) {
             if (field.getAnnotations().length == 0) {
@@ -438,7 +443,7 @@ public class AutoLog {
                     var annotation = field.getAnnotation(AL.Shuffleboard.class);
                     NetworkTableEntry entry;
                     try {
-                        McqShuffleboardApi.ShuffleEntry sbEntry = McqShuffleboardApi
+                        ShuffleboardApi.ShuffleEntry sbEntry = ShuffleboardApi
                             .getTab(ss_name).addEntry(f_name, field.get(subsystem));
                         Map<MetadataFields, Object> metadata = new HashMap<>();
                         if (annotation.pos().length > 0) {
@@ -466,6 +471,10 @@ public class AutoLog {
                         }
                     });
                     loggerPort = "Shuffleboard";
+                }
+                if (field.isAnnotationPresent(AL.DataLog.class)) {
+                    throw new IllegalArgumentException(
+                            "Cannot have both Tunable and DataLog annotations: " + ss_name + "." + f_name);
                 }
                 if (loggerPort == "") {
                     var entry = TunableValuesAPI.getTunableNTEntry(ss_name, f_name,
@@ -527,19 +536,19 @@ public class AutoLog {
                     DataType type = DataType.fromClass(field.getType());
                     if (ConstValues.DEBUG) {
                         if (type == DataType.Sendable) {
-                            McqShuffleboardApi.getTab(ss_name).addSendable(name, (Sendable) getSupplier(field, subsystem).get());
+                            ShuffleboardApi.getTab(ss_name).addSendable(name, (Sendable) getSupplier(field, subsystem).get());
                         } else {
                             shuffleboardWidgetHelper(getSupplier(field, subsystem), type, name, ss_name, annotation);
                         }
                     } else {
-                        String path = "";
-                        if (datalogKeepsShuffleboardPath) {
-                            path = shuffleboardDLpath + ss_name + "/" + name;
-                        } else {
-                            path = ss_name + "/" + name;
-                        }
+                        String path = ss_name + "/" + name;
                         if (type == DataType.Sendable) {
-                            DataLogger.addSendable((Sendable) getSupplier(field, subsystem).get(), path, name);
+                            var obj = getSupplier(field, subsystem).get();
+                            if (obj instanceof NTSendable) {
+                                DataLogger.addSendable((NTSendable) obj, ss_name, name);
+                            } else if (obj instanceof Sendable) {
+                                DataLogger.addSendable((Sendable) obj, ss_name, name);
+                            }
                         } else {
                             dataLoggerHelper(getSupplier(field, subsystem), type, path, false);
                         }
@@ -593,12 +602,7 @@ public class AutoLog {
                 if (ConstValues.DEBUG) {
                     shuffleboardWidgetHelper(getSupplier(method, subsystem), type, name, ss_name, annotation);
                 } else {
-                    String path = "";
-                    if (datalogKeepsShuffleboardPath) {
-                        path = shuffleboardDLpath + ss_name + "/" + name;
-                    } else {
-                        path = ss_name + "/" + name;
-                    }
+                    String path = ss_name + "/" + name;
                     dataLoggerHelper(getSupplier(method, subsystem), type, path, false);
                 }
                 loggerPort = "Shuffleboard";

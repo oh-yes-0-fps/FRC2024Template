@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -12,6 +13,10 @@ import java.util.function.LongConsumer;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
+import edu.wpi.first.networktables.NTSendableBuilder;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.Topic;
 import edu.wpi.first.util.datalog.BooleanArrayLogEntry;
 import edu.wpi.first.util.datalog.BooleanLogEntry;
 import edu.wpi.first.util.datalog.DataLog;
@@ -28,14 +33,17 @@ import edu.wpi.first.util.datalog.StringLogEntry;
 import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.util.function.FloatConsumer;
 import edu.wpi.first.util.function.FloatSupplier;
-import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DataLogManager;
 
-public class DataLogSendableBuilder implements SendableBuilder {
+public class DataLogSendableBuilder implements NTSendableBuilder {
     private static final DataLog log = DataLogManager.getLog();
+    private static final NetworkTable rootTable = NetworkTableInstance.getDefault().getTable("DataLogSendable");
+
+    private static Optional<NetworkTable> networkTable = Optional.empty();
 
     private final Map<DataLogEntry, Supplier<?>> dataLogMap = new HashMap<>();
-    private final List<AutoCloseable> m_closeables = new ArrayList<>();
+    private final List<Runnable> updateTables = new ArrayList<>();
+    private final List<AutoCloseable> closeables = new ArrayList<>();
     private String prefix;
 
     public DataLogSendableBuilder(String prefix) {
@@ -67,7 +75,7 @@ public class DataLogSendableBuilder implements SendableBuilder {
     @Override
     public void close() {
         clearProperties();
-        for (AutoCloseable c : m_closeables) {
+        for (AutoCloseable c : closeables) {
             try {
                 c.close();
             } catch (Exception e) {
@@ -77,7 +85,7 @@ public class DataLogSendableBuilder implements SendableBuilder {
     }
     @Override
     public void addCloseable(AutoCloseable c) {
-        m_closeables.add(c);
+        closeables.add(c);
     }
 
     @Override
@@ -158,6 +166,27 @@ public class DataLogSendableBuilder implements SendableBuilder {
     }
 
     @Override
+    public NetworkTable getTable() {
+        if (networkTable.isPresent()) {
+            return networkTable.get();
+        } else {
+            networkTable = Optional.of(rootTable.getSubTable(prefix));
+            DataLogger.addNetworkTable(networkTable.get(), prefix);
+            return networkTable.get();
+        }
+    }
+
+    @Override
+    public void setUpdateTable(Runnable func) {
+        updateTables.add(func);
+    }
+
+    @Override
+    public Topic getTopic(String key) {
+        return getTable().getTopic(key);
+    }
+
+    @Override
     public void update() {
         for (Map.Entry<DataLogEntry, Supplier<?>> entry : dataLogMap.entrySet()) {
             var key = entry.getKey();
@@ -195,6 +224,9 @@ public class DataLogSendableBuilder implements SendableBuilder {
             } else if (key instanceof StringLogEntry) {
                 ((StringLogEntry) key).append((String) val);
             }
+        }
+        for (Runnable updateTable : updateTables) {
+            updateTable.run();
         }
     }
 }

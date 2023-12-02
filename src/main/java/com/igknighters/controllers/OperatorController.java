@@ -6,7 +6,7 @@ import com.igknighters.subsystems.Resources.Subsystems;
 public class OperatorController extends ControllerParent {
 
     public OperatorController(int port) {
-        super(port, true);
+        super(port, true, ControllerType.Operator);
         // disregard null safety as it is checked on assignment
 
         /// FACE BUTTONS

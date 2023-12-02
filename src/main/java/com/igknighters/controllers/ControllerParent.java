@@ -1,9 +1,12 @@
 package com.igknighters.controllers;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
+import java.util.function.DoubleSupplier;
 
 import com.igknighters.subsystems.Resources.AllSubsystems;
 import com.igknighters.subsystems.Resources.Subsystems;
@@ -13,7 +16,17 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class ControllerParent {
-    private CommandXboxController controller;
+    private static final Map<ControllerType, ControllerParent> controllers = new HashMap<>();
+
+    public enum ControllerType {
+        Driver, Operator, Testing
+    }
+
+    public static Optional<ControllerParent> getController(ControllerType type) {
+        return Optional.ofNullable(controllers.get(type));
+    }
+
+    private final CommandXboxController controller;
     private boolean madeController;
 
     protected class TriggerBindingTuple {
@@ -105,17 +118,45 @@ public class ControllerParent {
         }
     }
 
-    protected TriggerBindingTuple A, B, X, Y, LB, RB, Back, Start, LS, RS, LT, RT, DPR, DPD, DPL, DPU;
+    protected final TriggerBindingTuple A, B, X, Y, LB, RB, LS, RS, LT, RT, DPR, DPD, DPL, DPU;
+    //i alwayss forget which is which
+    /**Left Center */
+    protected final TriggerBindingTuple Back;
+    /**Right Center */
+    protected final TriggerBindingTuple Start;
 
-    public ControllerParent(int port, boolean makeController) {
+
+    /**
+     * for button idx (nice for sim)
+     * {@link edu.wpi.first.wpilibj.XboxController.Button}
+     */
+    protected ControllerParent(int port, boolean makeController, ControllerType type) {
         this.madeController = makeController;
         if (madeController) {
             controller = new CommandXboxController(port);
             BootupLogger.BootupLog("Controller " + port + " initialized");
         } else {
+            controller = null;
             BootupLogger.BootupLog("Controller " + port + " not initialized");
+            A = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            B = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            X = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            Y = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            LB = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            RB = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            Back = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            Start = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            LS = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            RS = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            LT = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            RT = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            DPR = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            DPD = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            DPL = new TriggerBindingTuple(null, SingleDepBinding.empty());
+            DPU = new TriggerBindingTuple(null, SingleDepBinding.empty());
             return;
         }
+        controllers.put(type, this);
         A = new TriggerBindingTuple(controller.a(), SingleDepBinding.empty());
         B = new TriggerBindingTuple(controller.b(), SingleDepBinding.empty());
         X = new TriggerBindingTuple(controller.x(), SingleDepBinding.empty());
@@ -150,20 +191,52 @@ public class ControllerParent {
         }
     }
 
-    public Supplier<Double> rightStickX() {
+    private DoubleSupplier deadbandSupplier(DoubleSupplier supplier, Double deadband) {
+        return () -> {
+            double val = supplier.getAsDouble();
+            if (Math.abs(val) > deadband) {
+                if (val > 0.0) {
+                    val = (val - deadband) / (1.0 - deadband);
+                } else {
+                    val = (val + deadband) / (1.0 - deadband);
+                }
+            } else {
+                val = 0.0;
+            }
+            return val;
+        };
+    }
+
+    public DoubleSupplier rightStickX() {
         return () -> controller.getRightX();
     }
 
-    public Supplier<Double> rightStickY() {
+    public DoubleSupplier rightStickX(Double deadband) {
+        return deadbandSupplier(rightStickX(), deadband);
+    }
+
+    public DoubleSupplier rightStickY() {
         return () -> controller.getRightY();
     }
 
-    public Supplier<Double> leftStickX() {
+    public DoubleSupplier rightStickY(Double deadband) {
+        return deadbandSupplier(rightStickY(), deadband);
+    }
+
+    public DoubleSupplier leftStickX() {
         return () -> controller.getLeftX();
     }
 
-    public Supplier<Double> leftStickY() {
+    public DoubleSupplier leftStickX(Double deadband) {
+        return deadbandSupplier(leftStickX(), deadband);
+    }
+
+    public DoubleSupplier leftStickY() {
         return () -> controller.getLeftY();
+    }
+
+    public DoubleSupplier leftStickY(Double deadband) {
+        return deadbandSupplier(leftStickY(), deadband);
     }
 
     /**
@@ -172,7 +245,7 @@ public class ControllerParent {
      * @param suppressWarning if true will not print warning even if bound to a
      *                        command
      */
-    public Supplier<Double> rightTrigger(boolean suppressWarning) {
+    public DoubleSupplier rightTrigger(boolean suppressWarning) {
         if (RT.binding.isBound() && !suppressWarning) {
             return () -> {
                 System.out.println("WARNING: Right Trigger is bound to a command");
@@ -189,7 +262,7 @@ public class ControllerParent {
      * @param suppressWarning if true will not print warning even if bound to a
      *                        command
      */
-    public Supplier<Double> leftTrigger(boolean suppressWarning) {
+    public DoubleSupplier leftTrigger(boolean suppressWarning) {
         if (LT.binding.isBound() && !suppressWarning) {
             return () -> {
                 System.out.println("WARNING: Left Trigger is bound to a command");
